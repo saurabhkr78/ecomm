@@ -1,0 +1,5 @@
+fiber-> for http connection
+godotenv-> env file // in prouction we not gonna use dotenv we gonna congigure it in cicd pipeline but for local dev we need that
+
+
+Note: in go if you define a function name with small letter than you cannot access it in another function
