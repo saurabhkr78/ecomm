@@ -1,5 +1,35 @@
 fiber-> for http connection
 godotenv-> env file // in prouction we not gonna use dotenv we gonna congigure it in cicd pipeline but for local dev we need that
+air-> like nodemon for hot reloading on every changes
 
 
 Note: in go if you define a function name with small letter than you cannot access it in another function
+
+
+
+/*
+ctx is a context object fromfiber framework that provides methods and properties to handle HTTP requests and responses.
+It allows you to access request data, set response status codes, send JSON responses, and more.
+it contains all the information about the incoming request and provides methods to construct the response.
+ctx.Ststus(http.StatusOK) sets the HTTP status code of the response to 200 OK.
+.JSON(&fiber.Map{...}) does two things:
+1/ it sets the content type header of the response to application/json
+2/ it serializes the provided data (in this case, a map with "status" and "message" fields) into a JSON format and sends it as the response body.
+
+The &fiber.Map{...} is a shortcut for map[string]interface{} that creates a pointer to a map that contains the data you want to send in the JSON response.
+here
+
+	{
+			"status":  "success",
+			"message": "Ecomm API is up and running",
+			}
+
+func HealthCheck(ctx fiber.Ctx) error {
+	return ctx.Status(http.StatusOK).JSON(&fiber.Map{
+		"status":  "success",
+		"message": "Ecomm API is up and running",
+	})
+
+}
+
+*/

@@ -15,7 +15,7 @@ func SetUpEnv() (cfg AppConfig, err error) {
 
 	//some condition to check env file
 
-	if os.Getenv("ENV_FILE") == "dev" {
+	if os.Getenv("APP_ENV") == "dev" {
 		// Load development-specific configuration
 		godotenv.Load()
 	}
@@ -24,7 +24,7 @@ func SetUpEnv() (cfg AppConfig, err error) {
 
 	//check if httpPort is empty
 	if len(httpPort) < 1 {
-		return AppConfig{}, errors.New("env_variable HTTP_PORT not set")
+		return AppConfig{}, errors.New("env variable HTTP_PORT not found")
 	}
 	/*
 	   AppConfig{} creates an empty struct of type AppConfig with all fields set to their zero values.

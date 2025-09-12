@@ -1,8 +1,8 @@
 package main
 
 import (
-	"api"
-	"configs"
+	"ecomm/configs"
+	"ecomm/internal/api"
 	"log"
 )
 
@@ -14,5 +14,5 @@ func main() {
 	}
 	//if everything is fine start the server
 
-	api.startServer(cfg)
+	api.StartServer(cfg)
 }
