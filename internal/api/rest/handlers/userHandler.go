@@ -1,7 +1,40 @@
+/*
+/ UserHandler is responsible for handling user-related HTTP requests.
+// It depends on the UserService to perform business logic operations.
+type UserHandler struct {
+    svc service.UserService // Service layer dependency injected into the handler
+}
+
+// SetupUserRoutes registers all user-related routes with the Fiber app.
+// It takes a RestHandler, which holds the Fiber app instance, so routes can be attached.
+func SetupUserRoutes(rh *rest.RestHandler) {
+    // Grab the Fiber app instance from RestHandler (this is your running server).
+    app := rh.App
+
+    // Create an instance of the UserService.
+    // This service contains the business logic for user operations.
+    svc := service.UserService{}
+
+    // Create a new UserHandler and inject the UserService into it.
+    // This is an example of dependency injection, which makes testing and maintenance easier.
+    handler := &UserHandler{svc: svc}
+
+    // Now you would register your routes with the Fiber app.
+    // Example:
+    // app.Get("/users", handler.GetUsers)
+    // app.Post("/users", handler.CreateUser)
+
+
+
+
+*/
+
 package handlers
 
 import (
 	"ecomm/internal/api/rest"
+	"ecomm/internal/dto"
+	"ecomm/internal/service"
 	"github.com/gofiber/fiber/v3"
 	"net/http"
 )
@@ -10,6 +43,7 @@ import (
 // once the handler instance is created we can call the receiver function using that instance
 // when calling any endpoint our user handler will be able to respond accordingly as part of the API calls
 type UserHandler struct {
+	svc service.UserService
 }
 
 // here we need to accept something in our setup user routes function which is `app *fiber.App
@@ -24,8 +58,8 @@ func SetupUserRoutes(rh *rest.RestHandler) {
 	app := rh.App
 
 	//so,in future when we gonna create the instance of user service and inject to handler
-
-	handler := &UserHandler{}
+	svc := service.UserService{}
+	handler := &UserHandler{svc: svc}
 
 	// ---------- Public endpoints ----------
 	app.Post("/register", handler.Register) // User signup
@@ -54,7 +88,25 @@ func SetupUserRoutes(rh *rest.RestHandler) {
 
 // Register handles new user registration
 func (uh *UserHandler) Register(ctx fiber.Ctx) error {
-	return ctx.Status(http.StatusOK).JSON(fiber.Map{"message": "register"})
+	//some dto validation
+	//call the service layer
+	//return
+
+	//to create user
+	user := dto.UserSignup{}
+	err := ctx.Bind().Body(&user)
+	if err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"message": "please provide valid inputs",
+		})
+	}
+	token, err := uh.svc.Signup(user)
+	if err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"message": "error on signup",
+		})
+	}
+	return ctx.Status(http.StatusOK).JSON(fiber.Map{"message": token})
 }
 
 // Login handles user login
