@@ -54,10 +54,16 @@ System Design:
 
 Note:
 go mod init <project-name>
-conffigs: keeps all the config files
+configs: keeps all the config files
 internals: we keep whole applications and logics
 infra: infra files
 pkg: all the packages
 
 since c follows c type architecture so we need to keep a main file
 
+
+To run application in hot reloading mode
+make server
+
+Question:
+when to follow ORM and When to follow native sql?

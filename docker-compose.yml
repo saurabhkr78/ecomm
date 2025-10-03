@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  postgres:                    # code to spin database and other services
+    image: postgres:latest
+    restart: always
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=ecomm
+    ports:
+      - "5432:5432"            # first part is for our local machine and second part is for container
+    volumes:    #container data
+      - db:/var/lib/postgresql/data  # we are going to store data in this location
+
+volumes:
+  db:                          # what types of driver we are going to use to store postgres data
+    driver: local

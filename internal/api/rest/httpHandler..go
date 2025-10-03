@@ -2,6 +2,7 @@ package rest
 
 import (
 	"github.com/gofiber/fiber/v3"
+	"gorm.io/gorm"
 )
 
 // her we need to define pointer of fiber application
@@ -10,4 +11,5 @@ import (
 // so we created httpHandler.go
 type RestHandler struct {
 	App *fiber.App
+	DB  *gorm.DB
 }

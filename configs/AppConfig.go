@@ -6,8 +6,10 @@ import (
 	"os"
 )
 
+// DSN-Data Source name
 type AppConfig struct {
 	ServerPort string
+	Dsn        string
 }
 
 // here we will be reading env file and setting up the APPConfig struct
@@ -26,9 +28,14 @@ func SetUpEnv() (cfg AppConfig, err error) {
 	if len(httpPort) < 1 {
 		return AppConfig{}, errors.New("env variable HTTP_PORT not found")
 	}
+	//dsn for database connection
+	Dsn := os.Getenv("DSN")
+	if len(Dsn) < 1 {
+		return AppConfig{}, errors.New("env variable DSN not found")
+	}
 	/*
 	   AppConfig{} creates an empty struct of type AppConfig with all fields set to their zero values.
 	   errors.New(...) creates a new error object with the given message.
 	*/
-	return AppConfig{ServerPort: httpPort}, nil
+	return AppConfig{ServerPort: httpPort, Dsn: Dsn}, nil
 }

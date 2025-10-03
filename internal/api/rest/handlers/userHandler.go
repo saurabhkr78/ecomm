@@ -34,6 +34,7 @@ package handlers
 import (
 	"ecomm/internal/api/rest"
 	"ecomm/internal/dto"
+	"ecomm/internal/repository"
 	"ecomm/internal/service"
 	"github.com/gofiber/fiber/v3"
 	"net/http"
@@ -58,8 +59,13 @@ func SetupUserRoutes(rh *rest.RestHandler) {
 	app := rh.App
 
 	//so,in future when we gonna create the instance of user service and inject to handler
-	svc := service.UserService{}
-	handler := &UserHandler{svc: svc}
+	svc := service.UserService{
+		Repo: repository.NewUserRepository(rh.DB),
+	}
+
+	handler := &UserHandler{
+		svc: svc,
+	}
 
 	// ---------- Public endpoints ----------
 	app.Post("/register", handler.Register) // User signup
@@ -111,7 +117,26 @@ func (uh *UserHandler) Register(ctx fiber.Ctx) error {
 
 // Login handles user login
 func (uh *UserHandler) Login(ctx fiber.Ctx) error {
-	return ctx.Status(http.StatusOK).JSON(fiber.Map{"message": "login"})
+
+	loginInput := dto.UserLogin{}
+	err := ctx.Bind().Body(&loginInput)
+	if err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"message": "please provide valid inputs",
+		})
+	}
+	//if everthingis good pass it on and return token
+	token, err := uh.svc.Login(loginInput.Email, loginInput.Password)
+	if err != nil {
+		return ctx.Status(http.StatusUnauthorized).JSON(fiber.Map{
+			"message": "invalid credentials",
+		})
+	}
+
+	return ctx.Status(http.StatusOK).JSON(fiber.Map{
+		"message": "login",
+		"token":   token,
+	})
 }
 
 // GetVerificationCode returns a verification code

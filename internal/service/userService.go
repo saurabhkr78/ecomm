@@ -3,12 +3,15 @@ package service
 import (
 	"ecomm/internal/domain"
 	"ecomm/internal/dto"
+	"ecomm/internal/repository"
+	"errors"
+	"fmt"
 	"log"
 )
 
 type UserService struct {
 	// Add necessary fields like repository, logger, etc.
-
+	Repo repository.UserRepository
 }
 
 // receiver function
@@ -21,19 +24,41 @@ func (us UserService) Signup(input dto.UserSignup) (string, error) {
 	// Implement the logic to sign up a user.
 	//some business logic and database calls
 	log.Println(input)
-	return "this is my token as of now", nil
-}
+	user, err := us.Repo.CreateUser(domain.User{
+		Email:    input.Email,
+		Password: input.Password,
+		Phone:    input.Phone,
+	})
+	//generate token and return
+	log.Println(user)
 
-func (us UserService) Login(string, error) (string, error) {
-	// Implement the logic to sign up a user.
-	//some business logic and database calls
-	return "", nil
+	userInfo := fmt.Sprintf("%v,%v,%v", user.ID, user.Email, user.UserType)
+
+	//call db to craete user and return the user info
+	return userInfo, err
 }
 
 func (us UserService) FindUserByEmail(email string) (*domain.User, error) {
 	// Implement the logic to find a user by email.
 	//some business logic and database calls
-	return nil, nil
+	user, err := us.Repo.FindUser(email)
+	return &user, err
+}
+
+func (us UserService) Login(email string, password string) (string, error) {
+	// Implement the logic to sign up a user.
+	//some business logic and database calls
+
+	//call function find user by email
+	user, err := us.FindUserByEmail(email)
+
+	if err != nil {
+		return "", errors.New("user not exist with this email")
+	}
+
+	//compare the password ,generate and return the token
+
+	return user.Email, nil
 }
 
 func (us UserService) GetVerificationCode(e domain.User) (int, error) {
