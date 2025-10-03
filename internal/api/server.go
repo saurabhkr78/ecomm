@@ -5,10 +5,12 @@ import (
 	"ecomm/internal/api/rest"
 	"ecomm/internal/api/rest/handlers"
 	"ecomm/internal/domain"
+	"ecomm/internal/helper"
+	"log"
+
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"log"
 )
 
 func StartServer(config configs.AppConfig) {
@@ -26,10 +28,19 @@ func StartServer(config configs.AppConfig) {
 	//if database connection successful then runthe migration(here auto migration automatically detect the changes in user.go domain file and create table accordingly)
 	db.AutoMigrate(&domain.User{})
 
+	//befor resthandler we gonna create a auth instance
+	//so that we can use this auth instance in user service
+	//auth instance will have the secret key which we will use to generate token and hash password
+	//we can create a new field in rest handler struct to hold this auth instance but instead we can directly pass this auth instance to user service while creating its instance in user handler
+	//because only user service need this auth instance
+
+	auth := helper.SetUpAuth(config.AppSecret)
+
 	//intantiate rest handler
 	rh := &rest.RestHandler{
-		App: app,
-		DB:  db,
+		App:  app,
+		DB:   db,
+		Auth: auth,
 	}
 	//to create table we need migration also using gorm
 

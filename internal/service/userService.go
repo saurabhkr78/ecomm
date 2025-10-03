@@ -5,13 +5,14 @@ import (
 	"ecomm/internal/dto"
 	"ecomm/internal/repository"
 	"errors"
-	"fmt"
-	"log"
+
+	"ecomm/internal/helper"
 )
 
 type UserService struct {
 	// Add necessary fields like repository, logger, etc.
 	Repo repository.UserRepository
+	Auth helper.Auth
 }
 
 // receiver function
@@ -21,23 +22,22 @@ type UserService struct {
 // so instead of passing multiple parameters we can pass single input any
 // any is alias for empty interface{}
 func (us UserService) Signup(input dto.UserSignup) (string, error) {
-	// Implement the logic to sign up a user.
-	//some business logic and database calls
-	log.Println(input)
+
+	//hash the password before saving to db
+	hashedPassword, err := us.Auth.CreateHashedPassword(input.Password)
+	if err != nil {
+		return "", err
+	}
+
 	user, err := us.Repo.CreateUser(domain.User{
 		Email:    input.Email,
-		Password: input.Password,
+		Password: hashedPassword,
 		Phone:    input.Phone,
 	})
-	//generate token and return
-	log.Println(user)
-
-	userInfo := fmt.Sprintf("%v,%v,%v", user.ID, user.Email, user.UserType)
-
-	//call db to craete user and return the user info
-	return userInfo, err
+	return us.Auth.GenerateToken(user.ID, user.Email, user.UserType)
 }
 
+// find user by email
 func (us UserService) FindUserByEmail(email string) (*domain.User, error) {
 	// Implement the logic to find a user by email.
 	//some business logic and database calls
@@ -57,8 +57,14 @@ func (us UserService) Login(email string, password string) (string, error) {
 	}
 
 	//compare the password ,generate and return the token
+	err = us.Auth.VerifyPassword(password, user.Password)
 
-	return user.Email, nil
+	if err != nil {
+		return "", errors.New("invalid password")
+	}
+	//generate token and return
+	return us.Auth.GenerateToken(user.ID, user.Email, user.UserType)
+
 }
 
 func (us UserService) GetVerificationCode(e domain.User) (int, error) {

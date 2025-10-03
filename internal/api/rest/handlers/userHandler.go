@@ -61,30 +61,35 @@ func SetupUserRoutes(rh *rest.RestHandler) {
 	//so,in future when we gonna create the instance of user service and inject to handler
 	svc := service.UserService{
 		Repo: repository.NewUserRepository(rh.DB),
+		Auth: rh.Auth,
 	}
 
 	handler := &UserHandler{
 		svc: svc,
 	}
 
+	//grouping the routes
+	pubRoutes := app.Group("/users")
 	// ---------- Public endpoints ----------
-	app.Post("/register", handler.Register) // User signup
-	app.Post("/login", handler.Login)       // User login
+	pubRoutes.Post("/register", handler.Register) // User signup
+	pubRoutes.Post("/login", handler.Login)       // User login
 
+	// all the pvt routes has to go through authroziation middleware
+	pvtRoutes := pubRoutes.Group("/", rh.Auth.Authorize)
 	// ---------- Private endpoints ----------
-	app.Get("/verify", handler.GetVerificationCode) // Fetch verification code (e.g., for OTP)
-	app.Post("/verify", handler.Verify)             // Submit verification
+	pvtRoutes.Get("/verify", handler.GetVerificationCode) // Fetch verification code (e.g., for OTP)
+	pvtRoutes.Post("/verify", handler.Verify)             // Submit verification
 
-	app.Post("/profile", handler.CreateProfile) // Create/update profile
-	app.Get("/profile", handler.GetProfile)     // Fetch profile
+	pvtRoutes.Post("/profile", handler.CreateProfile) // Create/update profile
+	pvtRoutes.Get("/profile", handler.GetProfile)     // Fetch profile
 
-	app.Post("/cart", handler.AddToCart) // Add/update cart
-	app.Get("/cart", handler.GetCart)    // View cart
+	pvtRoutes.Post("/cart", handler.AddToCart) // Add/update cart
+	pvtRoutes.Get("/cart", handler.GetCart)    // View cart
 
-	app.Get("/order", handler.GetOrders)    // Fetch all orders
-	app.Get("/order/:id", handler.GetOrder) // Fetch specific order
+	pvtRoutes.Get("/order", handler.GetOrders)    // Fetch all orders
+	pvtRoutes.Get("/order/:id", handler.GetOrder) // Fetch specific order
 
-	app.Post("/become-seller", handler.BecomeSeller) // Upgrade to seller account
+	pvtRoutes.Post("/become-seller", handler.BecomeSeller) // Upgrade to seller account
 }
 
 // receiver function that wil accept the user handler instance
@@ -112,7 +117,10 @@ func (uh *UserHandler) Register(ctx fiber.Ctx) error {
 			"message": "error on signup",
 		})
 	}
-	return ctx.Status(http.StatusOK).JSON(fiber.Map{"message": token})
+	return ctx.Status(http.StatusOK).JSON(fiber.Map{
+		"message": "registered successfully",
+		"token":   token,
+	})
 }
 
 // Login handles user login
@@ -134,7 +142,7 @@ func (uh *UserHandler) Login(ctx fiber.Ctx) error {
 	}
 
 	return ctx.Status(http.StatusOK).JSON(fiber.Map{
-		"message": "login",
+		"message": "logged in successfully",
 		"token":   token,
 	})
 }

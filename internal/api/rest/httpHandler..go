@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"ecomm/internal/helper"
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
@@ -10,6 +11,7 @@ import (
 // and then we can call the setup user routes function using that struct instance
 // so we created httpHandler.go
 type RestHandler struct {
-	App *fiber.App
-	DB  *gorm.DB
+	App  *fiber.App
+	DB   *gorm.DB
+	Auth helper.Auth
 }
