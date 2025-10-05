@@ -5,6 +5,8 @@ import (
 	"ecomm/internal/dto"
 	"ecomm/internal/repository"
 	"errors"
+	"log"
+	"time"
 
 	"ecomm/internal/helper"
 )
@@ -67,14 +69,63 @@ func (us UserService) Login(email string, password string) (string, error) {
 
 }
 
-func (us UserService) GetVerificationCode(e domain.User) (int, error) {
-	// Implement the logic to sign up a user.
-	//some business logic and database calls
-	return 0, nil
+// check if user is verified or not
+func (us UserService) IsUserVerified(id uint) bool {
+	// Implement the logic to check if the user is verified.
+	currentUser, err := us.Repo.FindUserByID(id)
+	return err == nil && currentUser.Verified
 }
+
+func (us UserService) GetVerificationCode(e domain.User) (int, error) {
+	//if user already verified
+	if us.IsUserVerified(e.ID) {
+		return 0, errors.New("user already verified")
+	}
+	//generate verification code
+	code, err := us.Auth.GenerateCode()
+	if err != nil {
+		return 0, err
+	}
+	//update the user with latest verification code
+	user := domain.User{
+		Expiry: time.Now().Add(30 * time.Minute),
+		Code:   code,
+	}
+	_, err = us.Repo.UpdateUser(e.ID, user)
+	if err != nil {
+		return 0, errors.New("failed to update user with verification code")
+	}
+	//send sms or email to user with the code
+
+	//return code
+	return code, nil
+}
+
 func (us UserService) VerifyCode(id uint, code int) error {
-	// Implement the logic to sign up a user.
-	//some business logic and database calls
+	if us.IsUserVerified(id) {
+		log.Println("verified...")
+		return errors.New("user already verified")
+	}
+	user, err := us.Repo.FindUserByID(id)
+	if err != nil {
+		return err
+	}
+	if user.Code != code {
+		return errors.New("verification code doesn't match")
+	}
+	if time.Now().After(user.Expiry) {
+		return errors.New("Verification code expired")
+	}
+	//if everything is fine update the user as verified
+	updateUser := domain.User{
+		Verified: true,
+	}
+	_, err = us.Repo.UpdateUser(id, updateUser)
+
+	if err != nil {
+		return errors.New("Unable to Verify User")
+	}
+
 	return nil
 }
 func (us UserService) CreateProfile(id uint, input any) error {

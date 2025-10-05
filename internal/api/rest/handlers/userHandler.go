@@ -36,8 +36,10 @@ import (
 	"ecomm/internal/dto"
 	"ecomm/internal/repository"
 	"ecomm/internal/service"
-	"github.com/gofiber/fiber/v3"
+	"log"
 	"net/http"
+
+	"github.com/gofiber/fiber/v3"
 )
 
 // since all the receiver function will have handler function so we can create a struct type
@@ -149,12 +151,41 @@ func (uh *UserHandler) Login(ctx fiber.Ctx) error {
 
 // GetVerificationCode returns a verification code
 func (uh *UserHandler) GetVerificationCode(ctx fiber.Ctx) error {
-	return ctx.Status(http.StatusOK).JSON(fiber.Map{"message": "get verification code"})
+	user := uh.svc.Auth.GetCurrentUser(ctx)
+
+	//create verification code and update to user profile in DB
+	code, err := uh.svc.GetVerificationCode(user)
+	if err != nil {
+		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"message": "failed to get verification code",
+		})
+	}
+	return ctx.Status(http.StatusOK).JSON(fiber.Map{
+		"message": "get verification code",
+		"data":    code,
+	})
 }
 
 // Verify submits a verification code
 func (uh *UserHandler) Verify(ctx fiber.Ctx) error {
-	return ctx.Status(http.StatusOK).JSON(fiber.Map{"message": "verify"})
+	//get the user from the context using auth instance
+	user := uh.svc.Auth.GetCurrentUser(ctx)
+	//request the code from the body
+	var req dto.VerificationCodeInput
+	if err := ctx.Bind().Body(&req); err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"message": "Please!, provide valid input",
+		})
+	}
+	err := uh.svc.VerifyCode(user.ID, req.Code)
+
+	if err != nil {
+		log.Printf("verification error: %v", err)
+		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+	return ctx.Status(http.StatusOK).JSON(fiber.Map{"message": "verified successfully"})
 }
 
 // CreateProfile creates or updates a user profile
@@ -164,7 +195,12 @@ func (uh *UserHandler) CreateProfile(ctx fiber.Ctx) error {
 
 // GetProfile fetches the user profile
 func (uh *UserHandler) GetProfile(ctx fiber.Ctx) error {
-	return ctx.Status(http.StatusOK).JSON(fiber.Map{"message": "profile"})
+	user := uh.svc.Auth.GetCurrentUser(ctx)
+	log.Println(user)
+	return ctx.Status(http.StatusOK).JSON(fiber.Map{
+		"message": "Get profile",
+		"user":    user,
+	})
 }
 
 // AddToCart adds items to the user's cart
