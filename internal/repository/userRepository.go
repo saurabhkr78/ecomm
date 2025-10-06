@@ -33,6 +33,7 @@ type UserRepository interface {
 	UpdateUser(id uint, usr domain.User) (domain.User, error)
 
 	//more function will come here like delete user, get all users etc
+	CreateBankAccount(e domain.BankAccount) error
 }
 type userRepository struct {
 	//db connection will come here
@@ -111,4 +112,8 @@ func (r userRepository) UpdateUser(id uint, usr domain.User) (domain.User, error
 		return domain.User{}, errors.New("failed to update user")
 	}
 	return user, nil
+}
+
+func (r userRepository) CreateBankAccount(e domain.BankAccount) error {
+	return r.db.Create(&e).Error
 }

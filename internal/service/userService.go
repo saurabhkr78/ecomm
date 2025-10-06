@@ -1,11 +1,15 @@
 package service
 
 import (
+	"ecomm/configs"
 	"ecomm/internal/domain"
 	"ecomm/internal/dto"
 	"ecomm/internal/repository"
+	notification "ecomm/pkg/Notification"
 	"errors"
 	"log"
+	// "strconv"
+	"fmt"
 	"time"
 
 	"ecomm/internal/helper"
@@ -13,8 +17,9 @@ import (
 
 type UserService struct {
 	// Add necessary fields like repository, logger, etc.
-	Repo repository.UserRepository
-	Auth helper.Auth
+	Repo   repository.UserRepository
+	Auth   helper.Auth
+	Config configs.AppConfig
 }
 
 // receiver function
@@ -76,15 +81,15 @@ func (us UserService) IsUserVerified(id uint) bool {
 	return err == nil && currentUser.Verified
 }
 
-func (us UserService) GetVerificationCode(e domain.User) (int, error) {
+func (us UserService) GetVerificationCode(e domain.User) error {
 	//if user already verified
 	if us.IsUserVerified(e.ID) {
-		return 0, errors.New("user already verified")
+		return errors.New("user already verified")
 	}
 	//generate verification code
 	code, err := us.Auth.GenerateCode()
 	if err != nil {
-		return 0, err
+		return err
 	}
 	//update the user with latest verification code
 	user := domain.User{
@@ -93,12 +98,20 @@ func (us UserService) GetVerificationCode(e domain.User) (int, error) {
 	}
 	_, err = us.Repo.UpdateUser(e.ID, user)
 	if err != nil {
-		return 0, errors.New("failed to update user with verification code")
+		return errors.New("failed to update user with verification code")
 	}
-	//send sms or email to user with the code
+	//grab the user donot care about error bcoz we have already checked the user exist or not
+	user, _ = us.Repo.FindUserByID(e.ID)
 
-	//return code
-	return code, nil
+	//send sms or email to user with the code
+	notificationClient := notification.NewNotificationClient(us.Config)
+	msg := fmt.Sprintf("Your verification code is: %v", code)
+	err = notificationClient.SendSMS(user.Phone, msg)
+	if err != nil {
+		return errors.New("Error on sending sms")
+	}
+	//return verification code
+	return nil
 }
 
 func (us UserService) VerifyCode(id uint, code int) error {
@@ -146,7 +159,20 @@ func (us UserService) UpdateProfile(id uint, input any) error {
 	return nil
 }
 
-func (us UserService) BecomeSeller(id uint, input any) (string, error) {
+func (us UserService) BecomeSeller(id uint, input dto.SellerInput) (string, error) {
+	//find existing user
+	user, _ := us.Repo.FindUserByID(id)
+
+	if user.UserType == "seller" {
+		return "", errors.New("user already a seller")
+	}
+	//already a seller
+
+	//update the user type to seller
+
+	//generate and return the token
+
+	//create bank account information for the seller
 
 	return "", nil
 }

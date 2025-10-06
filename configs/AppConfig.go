@@ -8,9 +8,12 @@ import (
 
 // DSN-Data Source name
 type AppConfig struct {
-	ServerPort string
-	Dsn        string
-	AppSecret  string
+	ServerPort        string
+	Dsn               string
+	AppSecret         string
+	TwilioSid         string
+	TwilioAuthToken   string
+	TwilioPhoneNumber string
 }
 
 // here we will be reading env file and setting up the APPConfig struct
@@ -45,5 +48,9 @@ func SetUpEnv() (cfg AppConfig, err error) {
 		return AppConfig{}, errors.New("env variable APP_SECRET not found")
 	}
 
-	return AppConfig{ServerPort: httpPort, Dsn: Dsn, AppSecret: AppSecret}, nil
+	return AppConfig{ServerPort: httpPort, Dsn: Dsn, AppSecret: AppSecret,
+		TwilioSid:         os.Getenv("TWILIO_SID"),
+		TwilioAuthToken:   os.Getenv("TWILIO_AUTH_TOKEN"),
+		TwilioPhoneNumber: os.Getenv("TWILIO_PHONE_NUMBER"),
+	}, nil
 }

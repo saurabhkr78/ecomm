@@ -38,9 +38,10 @@ func StartServer(config configs.AppConfig) {
 
 	//intantiate rest handler
 	rh := &rest.RestHandler{
-		App:  app,
-		DB:   db,
-		Auth: auth,
+		App:    app,
+		DB:     db,
+		Auth:   auth,
+		Config: config,
 	}
 	//to create table we need migration also using gorm
 

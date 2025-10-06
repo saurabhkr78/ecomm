@@ -36,10 +36,10 @@ import (
 	"ecomm/internal/dto"
 	"ecomm/internal/repository"
 	"ecomm/internal/service"
+	"fmt"
+	"github.com/gofiber/fiber/v3"
 	"log"
 	"net/http"
-
-	"github.com/gofiber/fiber/v3"
 )
 
 // since all the receiver function will have handler function so we can create a struct type
@@ -62,8 +62,9 @@ func SetupUserRoutes(rh *rest.RestHandler) {
 
 	//so,in future when we gonna create the instance of user service and inject to handler
 	svc := service.UserService{
-		Repo: repository.NewUserRepository(rh.DB),
-		Auth: rh.Auth,
+		Repo:   repository.NewUserRepository(rh.DB),
+		Auth:   rh.Auth,
+		Config: rh.Config,
 	}
 
 	handler := &UserHandler{
@@ -154,15 +155,14 @@ func (uh *UserHandler) GetVerificationCode(ctx fiber.Ctx) error {
 	user := uh.svc.Auth.GetCurrentUser(ctx)
 
 	//create verification code and update to user profile in DB
-	code, err := uh.svc.GetVerificationCode(user)
+	err := uh.svc.GetVerificationCode(user)
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{
-			"message": "failed to get verification code",
+			"message": fmt.Sprintf("failed to get verification code: %v", err.Error()),
 		})
 	}
 	return ctx.Status(http.StatusOK).JSON(fiber.Map{
 		"message": "get verification code",
-		"data":    code,
 	})
 }
 
@@ -226,5 +226,20 @@ func (uh *UserHandler) GetOrder(ctx fiber.Ctx) error {
 
 // BecomeSeller upgrades a user to a seller account
 func (uh *UserHandler) BecomeSeller(ctx fiber.Ctx) error {
-	return ctx.Status(http.StatusOK).JSON(fiber.Map{"message": "become seller"})
+	user := uh.svc.Auth.GetCurrentUser(ctx)
+	req := dto.SellerInput{}
+	err := ctx.Bind().Body(&req)
+	if err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "request parameters are not valid"})
+	}
+	token, err := uh.svc.BecomeSeller(user.ID, req)
+
+	if err != nil {
+		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "failed to become seller"})
+	}
+
+	return ctx.Status(http.StatusOK).JSON(fiber.Map{
+		"message": "become seller",
+		"token":   token,
+	})
 }
