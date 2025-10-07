@@ -162,19 +162,36 @@ func (us UserService) UpdateProfile(id uint, input any) error {
 func (us UserService) BecomeSeller(id uint, input dto.SellerInput) (string, error) {
 	//find existing user
 	user, _ := us.Repo.FindUserByID(id)
-
-	if user.UserType == "seller" {
+	//return already a seller
+	if user.UserType == domain.SELLER {
 		return "", errors.New("user already a seller")
 	}
-	//already a seller
 
 	//update the user type to seller
+	seller, err := us.Repo.UpdateUser(id, domain.User{
+		FirstName: input.FirstName,
+		LastName:  input.LastName,
+		Phone:     input.PhoneNumber,
+		UserType:  domain.SELLER,
+	})
+
+	if err != nil {
+		return "", errors.New("failed to update user to seller")
+	}
 
 	//generate and return the token
+	token, err := us.Auth.GenerateToken(seller.ID, seller.Email, seller.UserType)
 
 	//create bank account information for the seller
+	account := domain.BankAccount{
+		UserID:      id,
+		BankAccount: input.BankAccountNumber,
+		IFSCCode:    input.IFSCCode,
+		PaymentType: input.PaymentType,
+	}
+	err = us.Repo.CreateBankAccount(account)
 
-	return "", nil
+	return token, err
 }
 
 // return bunch of card item so return slice of interface

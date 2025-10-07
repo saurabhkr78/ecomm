@@ -67,4 +67,4 @@ make server
 
 Question:
 when to follow ORM and When to follow native sql?
-why do we are usinf single table db for both the seller and buyer because it's a c2c portal
+why do we are usinf single table db for both the seller and buyer because it's a c2c portal and a normal user can become seller as well as buyer

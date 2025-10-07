@@ -26,7 +26,12 @@ func StartServer(config configs.AppConfig) {
 	log.Println("Database connected successfully")
 
 	//if database connection successful then runthe migration(here auto migration automatically detect the changes in user.go domain file and create table accordingly)
-	db.AutoMigrate(&domain.User{})
+	err = db.AutoMigrate(&domain.User{}, &domain.BankAccount{})
+	if err != nil {
+		log.Fatalf("Error on running migration %v", err.Error())
+	}
+
+	log.Println("Migration completed successfully")
 
 	//befor resthandler we gonna create a auth instance
 	//so that we can use this auth instance in user service
