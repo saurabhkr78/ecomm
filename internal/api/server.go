@@ -26,7 +26,7 @@ func StartServer(config configs.AppConfig) {
 	log.Println("Database connected successfully")
 
 	//if database connection successful then runthe migration(here auto migration automatically detect the changes in user.go domain file and create table accordingly)
-	err = db.AutoMigrate(&domain.User{}, &domain.BankAccount{})
+	err = db.AutoMigrate(&domain.User{}, &domain.BankAccount{}, &domain.Category{}, &domain.Product{})
 	if err != nil {
 		log.Fatalf("Error on running migration %v", err.Error())
 	}
@@ -63,4 +63,5 @@ func SetupRoutes(rh *rest.RestHandler) {
 	handlers.SetupUserRoutes(rh)
 	//transaction routes
 	//catalog routes
+	handlers.SetupCatalogRoutes(rh)
 }

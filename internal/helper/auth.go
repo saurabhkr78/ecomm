@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"fmt"
+
 	"github.com/gofiber/fiber/v3"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
@@ -181,4 +182,36 @@ func (a Auth) GetCurrentUser(ctx fiber.Ctx) domain.User {
 func (a Auth) GenerateCode() (int, error) {
 	//generate random 6 digit code
 	return RandomNumbers(6)
+}
+
+func (a Auth) AuthorizeSeller(ctx fiber.Ctx) error {
+	headers := ctx.GetReqHeaders()
+	authHeaders, exists := headers["Authorization"]
+
+	if !exists || len(authHeaders) == 0 {
+		return ctx.Status(401).JSON(fiber.Map{
+			"message": "unauthorized",
+			"reason":  "missing authorization header",
+		})
+	}
+
+	authHeader := authHeaders[0]
+	user, err := a.VerifyToken(authHeader)
+
+	if err != nil {
+		return ctx.Status(401).JSON(fiber.Map{
+			"message": "authorization failed",
+			"reason":  err.Error(),
+		})
+	}
+
+	if user.ID > 0 && user.UserType == domain.SELLER {
+		ctx.Locals("user", user)
+		return ctx.Next()
+	}
+
+	return ctx.Status(403).JSON(fiber.Map{
+		"message": "forbidden",
+		"reason":  "user is not a seller",
+	})
 }
