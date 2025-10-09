@@ -3,9 +3,9 @@ package repository
 import (
 	"ecomm/internal/domain"
 	"errors"
-	"log"
-
+	"fmt"
 	"gorm.io/gorm"
+	"log"
 )
 
 type CatalogRepository interface {
@@ -124,10 +124,18 @@ func (c *catalogRepository) EditProduct(e *domain.Product) (*domain.Product, err
 }
 
 func (c *catalogRepository) DeleteProduct(id uint) error {
-	err := c.db.Delete(&domain.Product{}, id).Error
-	if err != nil {
-		log.Printf("db_error %v", err)
-		return errors.New("failed to delete product")
+	// err := c.db.Delete(&domain.Product{}, id).Error
+	// if err != nil {
+	// 	return fmt.Errorf("failed to delete product with id %d: %w", id, err)
+	// }
+
+	// return nil
+	result := c.db.Delete(&domain.Product{}, id)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("no product found with id or already deleted %d", id)
 	}
 	return nil
 }

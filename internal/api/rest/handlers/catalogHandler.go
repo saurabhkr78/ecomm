@@ -232,6 +232,10 @@ func (ch CatalogHandler) UpdateStocks(ctx fiber.Ctx) error {
 func (ch CatalogHandler) DeleteProducts(ctx fiber.Ctx) error {
 	id, _ := strconv.Atoi(ctx.Params("id"))
 	//need to pass user to verify the owner of the product
-	err := ch.svc.DeleteProduct(uint(id))
-	return rest.SuccessResponse(ctx, "Product Deleted Successfully", err)
+	user := ch.svc.Auth.GetCurrentUser(ctx)
+	err := ch.svc.DeleteProduct(uint(id), user)
+	if err != nil {
+		return rest.InternalError(ctx, err)
+	}
+	return rest.SuccessResponse(ctx, "Product Deleted Successfully", nil)
 }

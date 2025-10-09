@@ -117,10 +117,14 @@ func (s CatalogService) EditProduct(id uint, input dto.CreateProductRequest, use
 
 	return UpdatedProduct, err
 }
-func (s CatalogService) DeleteProduct(id uint) error {
+func (s CatalogService) DeleteProduct(id uint, user domain.User) error {
 	existingProduct, err := s.Repo.FindProductByID(id)
 	if err != nil {
 		return errors.New("Product does not exist to delete")
+	}
+	//verify product owner
+	if existingProduct.UserId != int(user.ID) {
+		return errors.New("Unauthorized: You do not own this product or have the manage right to delete the product")
 	}
 	err = s.Repo.DeleteProduct(existingProduct.ID)
 	if err != nil {
