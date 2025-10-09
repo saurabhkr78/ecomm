@@ -14,6 +14,14 @@ type CatalogRepository interface {
 	FindCategoryByID(id uint) (domain.Category, error)
 	EditCategory(e domain.Category) (domain.Category, error)
 	DeleteCategory(id uint) error
+
+	// Add other necessary methods for catalog management
+	CreateProduct(e *domain.Product) error
+	FindProducts() ([]*domain.Product, error)
+	FindProductByID(id uint) (*domain.Product, error)
+	FindSellerProducts(sellerID uint) ([]*domain.Product, error)
+	EditProduct(e *domain.Product) (*domain.Product, error)
+	DeleteProduct(id uint) error
 }
 type catalogRepository struct {
 	//db connection will come here
@@ -63,6 +71,63 @@ func (c catalogRepository) DeleteCategory(id uint) error {
 	if err != nil {
 		log.Printf("db_error %v", err)
 		return errors.New("Failed to delete category")
+	}
+	return nil
+}
+
+//product repository functions
+
+func (c *catalogRepository) CreateProduct(e *domain.Product) error {
+	err := c.db.Model(&domain.Product{}).Create(e).Error
+	if err != nil {
+		log.Printf("db_error %v", err)
+		return errors.New("failed to create product")
+	}
+	return nil
+}
+
+func (c *catalogRepository) FindProducts() ([]*domain.Product, error) {
+	var products []*domain.Product
+	err := c.db.Find(&products).Error
+	if err != nil {
+		return nil, err
+	}
+	return products, nil
+}
+
+func (c *catalogRepository) FindProductByID(id uint) (*domain.Product, error) {
+	var product *domain.Product
+	err := c.db.First(&product, id).Error
+	if err != nil {
+		log.Printf("db_error %v", err)
+		return nil, errors.New("product doesn't exist")
+	}
+	return product, nil
+}
+
+func (c *catalogRepository) FindSellerProducts(id uint) ([]*domain.Product, error) {
+	var products []*domain.Product
+	err := c.db.Where("user_id = ?", id).Find(&products).Error
+	if err != nil {
+		return nil, err
+	}
+	return products, nil
+}
+
+func (c *catalogRepository) EditProduct(e *domain.Product) (*domain.Product, error) {
+	err := c.db.Save(&e).Error
+	if err != nil {
+		log.Printf("db_error %v", err)
+		return nil, errors.New("failed to update product")
+	}
+	return e, nil
+}
+
+func (c *catalogRepository) DeleteProduct(id uint) error {
+	err := c.db.Delete(&domain.Product{}, id).Error
+	if err != nil {
+		log.Printf("db_error %v", err)
+		return errors.New("failed to delete product")
 	}
 	return nil
 }
