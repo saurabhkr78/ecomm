@@ -9,6 +9,6 @@ type Category struct {
 	ImageUrl     string    `json:"image_url"`
 	Products     []Product `json:"products"`
 	DisplayOrder int       `json:"display_order"`
-	CreatedAt    time.Time `json:"created_at" gorm:"default:CURRENT_TIMESTAMP"`
-	UpdatedAt    time.Time `json:"updated_at" gorm:"default:CURRENT_TIMESTAMP"`
+	CreatedAt    time.Time `json:"created_at" default:"current_timestamp"`
+	UpdatedAt    time.Time `json:"updated_at" default:"current_timestamp"`
 }
