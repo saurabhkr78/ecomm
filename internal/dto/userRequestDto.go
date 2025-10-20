@@ -21,3 +21,18 @@ type SellerInput struct {
 	IFSCCode          string `json:"ifscCode"`
 	PaymentType       string `json:"paymentType"`
 }
+type AddressInput struct {
+	AddressLine1 string `json:"address_line_1"`
+	AddressLine2 string `json:"address_line_2"`
+	Street       string `json:"street"`
+	City         string `json:"city"`
+	State        string `json:"state"`
+	Country      string `json:"country"`
+	PinCode      string `json:"pin_code"`
+}
+
+type ProfileInput struct {
+	FirstName    string       `json:"first_name"`
+	LastName     string       `json:"last_name"`
+	AddressInput AddressInput `json:"address"`
+}

@@ -26,22 +26,26 @@ import (
 )
 
 type UserRepository interface {
-	//CRUD operations
+	//user
 	CreateUser(usr domain.User) (domain.User, error)
 	FindUser(email string) (domain.User, error)
 	FindUserByID(id uint) (domain.User, error)
 	UpdateUser(id uint, usr domain.User) (domain.User, error)
 
-	//more function will come here like delete user, get all users etc
+	//Bank Account
 	CreateBankAccount(e domain.BankAccount) error
 
-	//supporting function for cart
+	//cart
 	FindCartItems(uId uint) ([]domain.Cart, error)
 	FindCartItem(uId uint, pId uint) (domain.Cart, error)
 	CreateCart(c domain.Cart) error
 	UpdateCart(c domain.Cart) error
 	DeleteCartItems(uId uint) error
 	DeleteCartById(id uint) error
+
+	//profile
+	CreateProfile(addr domain.Address) error
+	UpdateProfile(addr domain.Address) error
 }
 type userRepository struct {
 	//db connection will come here
@@ -95,7 +99,7 @@ func (r userRepository) CreateUser(usr domain.User) (domain.User, error) {
 func (r userRepository) FindUser(email string) (domain.User, error) {
 
 	var user domain.User
-	err := r.db.First(&user, "email = ?", email).Error
+	err := r.db.Preload("Address").First(&user, "email = ?", email).Error
 	if err != nil {
 		log.Printf("error while finding user by email: %v\n", err)
 		return domain.User{}, errors.New("user not exists")
@@ -150,9 +154,14 @@ func (r userRepository) CreateCart(c domain.Cart) error {
 }
 
 // TODO: response is not updating qty
+//
+//	func (r userRepository) UpdateCart(c domain.Cart) error {
+//		var cart domain.Cart
+//		err := r.db.Model(&cart).Clauses(clause.Returning{}).Where("id = ?", c.ID).Updates(c).Error
+//		return err
+//	}
 func (r userRepository) UpdateCart(c domain.Cart) error {
-	var cart domain.Cart
-	err := r.db.Model(&cart).Clauses(clause.Returning{}).Where("id = ?", c.ID).Updates(c).Error
+	err := r.db.Save(&c).Error
 	return err
 }
 
@@ -164,4 +173,24 @@ func (r userRepository) DeleteCartById(id uint) error {
 func (r userRepository) DeleteCartItems(uId uint) error {
 	err := r.db.Where("user_id = ?", uId).Delete(&domain.Cart{}).Error
 	return err
+}
+
+// profile functions
+
+func (r userRepository) CreateProfile(addr domain.Address) error {
+	err := r.db.Create(&addr).Error
+	if err != nil {
+		log.Printf("error while creating profile with address: %v\n", err)
+		return errors.New("failed to create profile")
+	}
+	return nil
+}
+
+func (r userRepository) UpdateProfile(addr domain.Address) error {
+	err := r.db.Model(&domain.Address{}).Where("user_id = ?", addr.UserID).Updates(addr).Error
+	if err != nil {
+		log.Printf("error while updating profile with address: %v\n", err)
+		return errors.New("failed to update profile")
+	}
+	return nil
 }

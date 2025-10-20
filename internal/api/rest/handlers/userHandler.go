@@ -82,8 +82,9 @@ func SetupUserRoutes(rh *rest.RestHandler) {
 	pvtRoutes.Get("/verify", handler.GetVerificationCode) // Fetch verification code (e.g., for OTP)
 	pvtRoutes.Post("/verify", handler.Verify)             // Submit verification
 
-	pvtRoutes.Post("/profile", handler.CreateProfile) // Create/update profile
-	pvtRoutes.Get("/profile", handler.GetProfile)     // Fetch profile
+	pvtRoutes.Post("/profile", handler.CreateProfile)  // Create/update profile
+	pvtRoutes.Get("/profile", handler.GetProfile)      // Fetch profile
+	pvtRoutes.Patch("/profile", handler.UpdateProfile) // Edit profile
 
 	pvtRoutes.Post("/cart", handler.AddToCart)    // Add/update cart
 	pvtRoutes.Get("/cart", handler.GetCart)       // View cart
@@ -188,6 +189,23 @@ func (uh *UserHandler) Verify(ctx fiber.Ctx) error {
 
 // CreateProfile creates or updates a user profile
 func (uh *UserHandler) CreateProfile(ctx fiber.Ctx) error {
+	user := uh.svc.Auth.GetCurrentUser(ctx)
+	req := dto.ProfileInput{}
+	if err := ctx.Bind().JSON(&req); err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"message": "Please provide a valid Input",
+			"error":   err.Error(),
+		})
+	}
+	log.Printf("user %v", user)
+	//create profile
+	err := uh.svc.CreateProfile(user.ID, req)
+	if err != nil {
+		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"message": "failed to create profile",
+		})
+	}
+
 	return ctx.Status(http.StatusOK).JSON(fiber.Map{"message": "profile created/updated"})
 }
 
@@ -195,9 +213,38 @@ func (uh *UserHandler) CreateProfile(ctx fiber.Ctx) error {
 func (uh *UserHandler) GetProfile(ctx fiber.Ctx) error {
 	user := uh.svc.Auth.GetCurrentUser(ctx)
 	log.Println(user)
+
+	//call user service to get profile
+	profile, err := uh.svc.GetProfile(user.ID)
+	if err != nil {
+		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"message": "failed to get profile",
+		})
+	}
 	return ctx.Status(http.StatusOK).JSON(fiber.Map{
 		"message": "Get profile",
-		"user":    user,
+		"profile": profile,
+	})
+}
+
+func (uh *UserHandler) UpdateProfile(ctx fiber.Ctx) error {
+	user := uh.svc.Auth.GetCurrentUser(ctx)
+	req := dto.ProfileInput{}
+	if err := ctx.Bind().JSON(&req); err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"message": "Please provide a valid Input",
+			"error":   err.Error(),
+		})
+	}
+	//call user service to update profile
+	err := uh.svc.UpdateProfile(user.ID, req)
+	if err != nil {
+		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"message": "failed to update profile",
+		})
+	}
+	return ctx.Status(http.StatusOK).JSON(fiber.Map{
+		"message": "profile updated successfully",
 	})
 }
 

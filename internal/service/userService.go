@@ -142,7 +142,7 @@ func (us UserService) VerifyCode(id uint, code int) error {
 
 	return nil
 }
-func (us UserService) CreateProfile(id uint, input any) error {
+func (us UserService) CreateProfile(id uint, input dto.ProfileInput) error {
 
 	return nil
 }
@@ -203,9 +203,67 @@ func (us UserService) FindCart(id uint) ([]domain.Cart, error) {
 	return cartItems, err
 }
 
+// func (us UserService) CreateCart(input dto.CreateCartRequest, u domain.User) ([]domain.Cart, error) {
+// 	// check if the cart is Exist
+// 	cart, _ := us.Repo.FindCartItem(u.ID, input.ProductID)
+
+// 	if cart.ID > 0 {
+// 		if input.ProductID == 0 {
+// 			return nil, errors.New("please provide a valid product id")
+// 		}
+// 		//  => delete the cart item
+// 		if input.Quantity < 1 {
+// 			err := us.Repo.DeleteCartById(cart.ID)
+// 			if err != nil {
+// 				log.Printf("Error on deleting cart item %v", err)
+// 				return nil, errors.New("error on deleting cart item")
+// 			}
+// 		} else {
+// 			//  => update the cart item
+// 			cart.Qty = int(input.Quantity)
+// 			err := us.Repo.UpdateCart(cart)
+// 			if err != nil {
+// 				// log error
+// 				return nil, errors.New("error on updating cart item")
+// 			}
+// 		}
+
+// 	} else {
+// 		// check if product exist
+// 		product, _ := us.Catalog.FindProductByID(input.ProductID)
+// 		if product.ID < 1 {
+// 			return nil, errors.New("product not found to create cart item")
+// 		}
+// 		// create cart
+
+// 		err := us.Repo.CreateCart(domain.Cart{
+// 			UserId:    u.ID,
+// 			ProductId: input.ProductID,
+// 			Name:      product.Name,
+// 			ImageUrl:  product.ImageUrl,
+// 			Qty:       int(input.Quantity),
+// 			Price:     product.Price,
+// 			SellerId:  uint(product.UserId),
+// 		})
+
+// 		if err != nil {
+// 			return nil, errors.New("error on creating cart item")
+// 		}
+// 	}
+
+// 	return us.Repo.FindCartItems(u.ID)
+
+// }
+
 func (us UserService) CreateCart(input dto.CreateCartRequest, u domain.User) ([]domain.Cart, error) {
 	// check if the cart is Exist
 	cart, _ := us.Repo.FindCartItem(u.ID, input.ProductID)
+
+	// check if product exist
+	product, err := us.Catalog.FindProductByID(input.ProductID)
+	if err != nil {
+		return nil, errors.New("product not found")
+	}
 
 	if cart.ID > 0 {
 		if input.ProductID == 0 {
@@ -220,7 +278,7 @@ func (us UserService) CreateCart(input dto.CreateCartRequest, u domain.User) ([]
 			}
 		} else {
 			//  => update the cart item
-			cart.Qty = int(input.Quantity)
+			cart.Qty = cart.Qty + int(input.Quantity)
 			err := us.Repo.UpdateCart(cart)
 			if err != nil {
 				// log error
@@ -229,8 +287,6 @@ func (us UserService) CreateCart(input dto.CreateCartRequest, u domain.User) ([]
 		}
 
 	} else {
-		// check if product exist
-		product, _ := us.Catalog.FindProductByID(input.ProductID)
 		if product.ID < 1 {
 			return nil, errors.New("product not found to create cart item")
 		}
