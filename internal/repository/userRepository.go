@@ -34,6 +34,14 @@ type UserRepository interface {
 
 	//more function will come here like delete user, get all users etc
 	CreateBankAccount(e domain.BankAccount) error
+
+	//supporting function for cart
+	FindCartItems(uId uint) ([]domain.Cart, error)
+	FindCartItem(uId uint, pId uint) (domain.Cart, error)
+	CreateCart(c domain.Cart) (domain.Cart, error)
+	UpdateCart(c domain.Cart) error
+	DeleteCartItems(uId uint) error
+	DeleteCartById(id uint) error
 }
 type userRepository struct {
 	//db connection will come here
@@ -62,6 +70,7 @@ func NewUserRepository(db *gorm.DB) UserRepository {
 // 	return usr, err
 // }
 
+// user
 func (r userRepository) CreateUser(usr domain.User) (domain.User, error) {
 	// The Create method will populate the usr object with the new ID.
 	err := r.db.Create(&usr).Error
@@ -114,6 +123,41 @@ func (r userRepository) UpdateUser(id uint, usr domain.User) (domain.User, error
 	return user, nil
 }
 
+//BankAccount functions
+
 func (r userRepository) CreateBankAccount(e domain.BankAccount) error {
 	return r.db.Create(&e).Error
+}
+
+//cart functions
+
+func (r userRepository) FindCartItems(uId uint) ([]domain.Cart, error) {
+	var carts []domain.Cart
+	err := r.db.Where("user_id = ?", uId).Find(&carts).Error
+	return carts, err
+}
+
+func (r userRepository) FindCartItem(uId uint, pId uint) (domain.Cart, error) {
+	cartItem := domain.Cart{}
+	err := r.db.Where("user_id = ? AND product_id = ?", uId, pId).First(&cartItem).Error
+	return cartItem, err
+}
+
+func (r userRepository) CreateCart(c domain.Cart) (domain.Cart, error) {
+	return c, r.db.Create(&c).Error
+
+}
+func (r userRepository) UpdateCart(c domain.Cart) error {
+	var cart domain.Cart
+	err := r.db.Model(&cart).Clauses(clause.Returning{}).Where("id = ?", c.ID).Updates(c).Error
+	return err
+}
+func (r userRepository) DeleteCartById(id uint) error {
+	err := r.db.Delete(&domain.Cart{}, id).Error
+	return err
+}
+
+func (r userRepository) DeleteCartItems(uId uint) error {
+	err := r.db.Where("user_id = ?", uId).Delete(&domain.Cart{}).Error
+	return err
 }

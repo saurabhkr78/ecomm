@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"ecomm/internal/api/rest"
-	"ecomm/internal/domain"
 	"ecomm/internal/dto"
 	"strconv"
 
@@ -35,7 +34,7 @@ func SetupCatalogRoutes(rh *rest.RestHandler) {
 		Config: rh.Config,
 	}
 
-	handler := &CatalogHandler{
+	handler := CatalogHandler{
 		svc: svc,
 	}
 
@@ -90,9 +89,21 @@ func (ch CatalogHandler) GetCategoryById(ctx fiber.Ctx) error {
 	return rest.SuccessResponse(ctx, "Category ", category)
 }
 
+func (ch CatalogHandler) CreateCategory(ctx fiber.Ctx) error {
+	req := dto.CreateCategoryRequest{}
+	if err := ctx.Bind().JSON(&req); err != nil {
+		return rest.BadRequestError(ctx, "Create category request is not valid")
+	}
+	err := ch.svc.CreateCategory(req)
+	if err != nil {
+		return rest.InternalError(ctx, err)
+	}
+	return rest.SuccessResponse(ctx, "Category Created Successfully", nil)
+}
+
 //private routes fxn for seller
 
-func (ch CatalogHandler) CreateCategory(ctx fiber.Ctx) error {
+func (ch CatalogHandler) CreateCategories(ctx fiber.Ctx) error {
 
 	req := dto.CreateCategoryRequest{}
 	err := ctx.Bind().Body(&req)
@@ -125,31 +136,6 @@ func (ch CatalogHandler) EditCategory(ctx fiber.Ctx) error {
 	}
 	return rest.SuccessResponse(ctx, "Edit Category", updatedCategory)
 }
-
-// func (ch CatalogHandler) EditCategory(ctx fiber.Ctx) error {
-// 	// 1. Get the category ID from URL param
-// 	id, err := strconv.Atoi(ctx.Params("id"))
-// 	if err != nil {
-// 		return rest.BadRequestError(ctx, "invalid category ID")
-// 	}
-
-// 	// 2. Create a struct to hold the JSON body
-// 	var req dto.CreateCategoryRequest
-
-// 	// 3. Bind the JSON body into the struct
-// 	if err := ctx.Bind().Body(&req); err != nil {
-// 		return rest.BadRequestError(ctx, "edit category request is not valid")
-// 	}
-
-// 	// 4. Call the service to update the category
-// 	updatedCategory, err := ch.svc.EditCategory(uint(id), req)
-// 	if err != nil {
-// 		return rest.InternalError(ctx, err)
-// 	}
-
-// 	// 5. Return success response
-// 	return rest.SuccessResponse(ctx, "Edit Category", updatedCategory)
-// }
 
 func (ch *CatalogHandler) DeleteCategory(ctx fiber.Ctx) error {
 	id, _ := strconv.Atoi(ctx.Params("id"))
@@ -217,12 +203,8 @@ func (ch CatalogHandler) UpdateStocks(ctx fiber.Ctx) error {
 		return rest.BadRequestError(ctx, "Update Stocks request is not valid")
 	}
 	user := ch.svc.Auth.GetCurrentUser(ctx)
-	product := domain.Product{
-		ID:     uint(id),
-		Stock:  req.Stock,
-		UserId: int(user.ID),
-	}
-	updatedProduct, err := ch.svc.UpdateProductStock(product)
+
+	updatedProduct, err := ch.svc.UpdateProductStock(uint(id), req.Stock, user)
 	if err != nil {
 		return rest.InternalError(ctx, err)
 	}

@@ -19,7 +19,7 @@ type CatalogService struct {
 }
 
 func (s CatalogService) CreateCategory(input dto.CreateCategoryRequest) error {
-	err := s.Repo.CreateCategory(domain.Category{
+	err := s.Repo.CreateCategory(&domain.Category{
 		Name:         input.Name,
 		ImageUrl:     input.ImageUrl,
 		DisplayOrder: input.DisplayOrder,
@@ -47,7 +47,7 @@ func (s CatalogService) EditCategory(id uint, input dto.CreateCategoryRequest) (
 	}
 	UpdatedCategory, err := s.Repo.EditCategory(existingCategory)
 
-	return &UpdatedCategory, err
+	return UpdatedCategory, err
 }
 
 func (s CatalogService) DeleteCategory(id uint) error {
@@ -61,12 +61,12 @@ func (s CatalogService) DeleteCategory(id uint) error {
 }
 
 // errror check on both fxn is needed
-func (s CatalogService) GetCategories() (*[]domain.Category, error) {
+func (s CatalogService) GetCategories() ([]*domain.Category, error) {
 	categories, err := s.Repo.FindCategories()
 	if err != nil {
 		return nil, errors.New("Categories doesnot exist")
 	}
-	return &categories, err
+	return categories, err
 }
 
 func (s CatalogService) GetCategory(id uint) (*domain.Category, error) {
@@ -74,7 +74,7 @@ func (s CatalogService) GetCategory(id uint) (*domain.Category, error) {
 	if err != nil {
 		return nil, errors.New("Category doesnot exist")
 	}
-	return &category, err
+	return category, err
 }
 
 // Product service functions
@@ -100,12 +100,22 @@ func (s CatalogService) EditProduct(id uint, input dto.CreateProductRequest, use
 	if existingProduct.UserId != int(user.ID) {
 		return nil, errors.New("Unauthorized: You do not own this product or right to edit the product")
 	}
+
 	if len(input.Name) > 0 {
 		existingProduct.Name = input.Name
 	}
 	if len(input.Description) > 0 {
 		existingProduct.Description = input.Description
 	}
+	// if input.ParentId > 0 {
+	// 	existingProduct.ParentId = input.ParentId
+	// }
+	if len(input.ImageUrl) > 0 {
+		existingProduct.ImageUrl = input.ImageUrl
+	}
+	// if input.DisplayOrder >= 0 {
+	// 	existingProduct.DisplayOrder = input.DisplayOrder
+	// }
 	if input.Price > 0 {
 		existingProduct.Price = float64(input.Price)
 	}
@@ -154,16 +164,16 @@ func (s CatalogService) GetSellerProducts(id uint) ([]*domain.Product, error) {
 	}
 	return products, err
 }
-func (s CatalogService) UpdateProductStock(e domain.Product) (*domain.Product, error) {
-	existingProduct, err := s.Repo.FindProductByID(uint(e.ID))
+func (s CatalogService) UpdateProductStock(id uint, stock int, user domain.User) (*domain.Product, error) {
+	existingProduct, err := s.Repo.FindProductByID(id)
 	if err != nil {
 		return nil, errors.New("Product does not exist")
 	}
 	//verify product owner
-	if existingProduct.UserId != e.UserId {
+	if existingProduct.UserId != int(user.ID) {
 		return nil, errors.New("Unauthorized: You do not own this product or right to edit the product stock")
 	}
-	existingProduct.Stock = e.Stock
+	existingProduct.Stock = stock
 	updatedProduct, err := s.Repo.EditProduct(existingProduct)
 	if err != nil {
 		return nil, errors.New("Failed to update product stock")

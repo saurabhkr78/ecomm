@@ -23,10 +23,6 @@ func SetupUserRoutes(rh *rest.RestHandler) {
     // Example:
     // app.Get("/users", handler.GetUsers)
     // app.Post("/users", handler.CreateUser)
-
-
-
-
 */
 
 package handlers
@@ -36,10 +32,12 @@ import (
 	"ecomm/internal/dto"
 	"ecomm/internal/repository"
 	"ecomm/internal/service"
+	"errors"
 	"fmt"
-	"github.com/gofiber/fiber/v3"
 	"log"
 	"net/http"
+
+	"github.com/gofiber/fiber/v3"
 )
 
 // since all the receiver function will have handler function so we can create a struct type
@@ -62,9 +60,10 @@ func SetupUserRoutes(rh *rest.RestHandler) {
 
 	//so,in future when we gonna create the instance of user service and inject to handler
 	svc := service.UserService{
-		Repo:   repository.NewUserRepository(rh.DB),
-		Auth:   rh.Auth,
-		Config: rh.Config,
+		Repo:    repository.NewUserRepository(rh.DB),
+		Catalog: repository.NewCatalogRepository(rh.DB),
+		Auth:    rh.Auth,
+		Config:  rh.Config,
 	}
 
 	handler := &UserHandler{
@@ -86,9 +85,8 @@ func SetupUserRoutes(rh *rest.RestHandler) {
 	pvtRoutes.Post("/profile", handler.CreateProfile) // Create/update profile
 	pvtRoutes.Get("/profile", handler.GetProfile)     // Fetch profile
 
-	pvtRoutes.Post("/cart", handler.AddToCart) // Add/update cart
-	pvtRoutes.Get("/cart", handler.GetCart)    // View cart
-
+	pvtRoutes.Post("/cart", handler.AddToCart)    // Add/update cart
+	pvtRoutes.Get("/cart", handler.GetCart)       // View cart
 	pvtRoutes.Get("/order", handler.GetOrders)    // Fetch all orders
 	pvtRoutes.Get("/order/:id", handler.GetOrder) // Fetch specific order
 
@@ -205,12 +203,35 @@ func (uh *UserHandler) GetProfile(ctx fiber.Ctx) error {
 
 // AddToCart adds items to the user's cart
 func (uh *UserHandler) AddToCart(ctx fiber.Ctx) error {
-	return ctx.Status(http.StatusOK).JSON(fiber.Map{"message": "item added to cart"})
+	req := dto.CreateCartRequest{}
+	if err := ctx.Bind().Body(&req); err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"message": "Please!, provide valid product and quantity",
+		})
+	}
+	user := uh.svc.Auth.GetCurrentUser(ctx)
+
+	//call user service to add item to cart
+	cartItems, err := uh.svc.CreateCart(req, user)
+	if err != nil {
+		return rest.InternalError(ctx, err)
+	}
+
+	return rest.SuccessResponse(ctx, "cart created successfully", cartItems)
 }
 
 // GetCart fetches the user's cart items
 func (uh *UserHandler) GetCart(ctx fiber.Ctx) error {
-	return ctx.Status(http.StatusOK).JSON(fiber.Map{"message": "cart items"})
+	user := uh.svc.Auth.GetCurrentUser(ctx)
+	cart, err := uh.svc.FindCart(user.ID)
+	if err != nil {
+		return rest.InternalError(ctx, errors.New("Cart doesn't exist"))
+	}
+
+	return ctx.Status(http.StatusOK).JSON(fiber.Map{
+		"message": "cart items",
+		"cart":    cart,
+	})
 }
 
 // GetOrders fetches all user orders

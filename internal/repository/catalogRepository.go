@@ -9,10 +9,10 @@ import (
 )
 
 type CatalogRepository interface {
-	CreateCategory(e domain.Category) error
-	FindCategories() ([]domain.Category, error)
-	FindCategoryByID(id uint) (domain.Category, error)
-	EditCategory(e domain.Category) (domain.Category, error)
+	CreateCategory(e *domain.Category) error
+	FindCategories() ([]*domain.Category, error)
+	FindCategoryByID(id uint) (*domain.Category, error)
+	EditCategory(e *domain.Category) (*domain.Category, error)
 	DeleteCategory(id uint) error
 
 	// Add other necessary methods for catalog management
@@ -28,8 +28,8 @@ type catalogRepository struct {
 	db *gorm.DB
 }
 
-func (c catalogRepository) CreateCategory(e domain.Category) error {
-	err := c.db.Create(&e).Error
+func (c *catalogRepository) CreateCategory(e *domain.Category) error {
+	err := c.db.Create(e).Error
 
 	if err != nil {
 		log.Printf("db_error %v", err)
@@ -38,8 +38,8 @@ func (c catalogRepository) CreateCategory(e domain.Category) error {
 	return nil
 }
 
-func (c catalogRepository) FindCategories() ([]domain.Category, error) {
-	var categories []domain.Category
+func (c *catalogRepository) FindCategories() ([]*domain.Category, error) {
+	var categories []*domain.Category
 	err := c.db.Find(&categories).Error
 
 	if err != nil {
@@ -48,25 +48,27 @@ func (c catalogRepository) FindCategories() ([]domain.Category, error) {
 	return categories, nil
 }
 
-func (c catalogRepository) FindCategoryByID(id uint) (domain.Category, error) {
-	var category domain.Category
+func (c *catalogRepository) FindCategoryByID(id uint) (*domain.Category, error) {
+	var category *domain.Category
 	err := c.db.First(&category, id).Error
 	if err != nil {
 		log.Printf("db_error %v", err)
-		return domain.Category{}, errors.New("category doesn't exist")
+		return nil, errors.New("category doesn't exist")
 	}
 	return category, nil
 }
 
-func (c catalogRepository) EditCategory(e domain.Category) (domain.Category, error) {
+func (c *catalogRepository) EditCategory(e *domain.Category) (*domain.Category, error) {
 	err := c.db.Save(&e).Error
 	if err != nil {
 		log.Printf("db_error %v", err)
-		return domain.Category{}, errors.New("Failed to update category")
+		return nil, errors.New("Failed to update category")
+
 	}
 	return e, nil
 }
-func (c catalogRepository) DeleteCategory(id uint) error {
+
+func (c *catalogRepository) DeleteCategory(id uint) error {
 	err := c.db.Delete(&domain.Category{}, id).Error
 	if err != nil {
 		log.Printf("db_error %v", err)
@@ -115,7 +117,7 @@ func (c *catalogRepository) FindSellerProducts(id uint) ([]*domain.Product, erro
 }
 
 func (c *catalogRepository) EditProduct(e *domain.Product) (*domain.Product, error) {
-	err := c.db.Save(&e).Error
+	err := c.db.Save(e).Error
 	if err != nil {
 		log.Printf("db_error %v", err)
 		return nil, errors.New("failed to update product")
@@ -123,21 +125,22 @@ func (c *catalogRepository) EditProduct(e *domain.Product) (*domain.Product, err
 	return e, nil
 }
 
+// TODO:Delete product is not working properly
 func (c *catalogRepository) DeleteProduct(id uint) error {
-	// err := c.db.Delete(&domain.Product{}, id).Error
-	// if err != nil {
-	// 	return fmt.Errorf("failed to delete product with id %d: %w", id, err)
-	// }
+	err := c.db.Delete(&domain.Product{}, id).Error
+	if err != nil {
+		return fmt.Errorf("failed to delete product with id %d: %w", id, err)
+	}
 
-	// return nil
-	result := c.db.Delete(&domain.Product{}, id)
-	if result.Error != nil {
-		return result.Error
-	}
-	if result.RowsAffected == 0 {
-		return fmt.Errorf("no product found with id or already deleted %d", id)
-	}
 	return nil
+	// result := c.db.Delete(&domain.Product{}, id)
+	// if result.Error != nil {
+	// 	return result.Error
+	// }
+	// if result.RowsAffected == 0 {
+	// 	return fmt.Errorf("no product found with id or already deleted %d", id)
+	// }
+	// return nil
 }
 
 // since we cannot create object of interface so we need to create object of struct which implements the interface

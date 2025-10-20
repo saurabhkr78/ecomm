@@ -9,6 +9,7 @@ import (
 	"log"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/cors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -26,12 +27,55 @@ func StartServer(config configs.AppConfig) {
 	log.Println("Database connected successfully")
 
 	//if database connection successful then runthe migration(here auto migration automatically detect the changes in user.go domain file and create table accordingly)
-	err = db.AutoMigrate(&domain.User{}, &domain.BankAccount{}, &domain.Category{}, &domain.Product{})
+	err = db.AutoMigrate(&domain.User{},
+		&domain.BankAccount{},
+		&domain.Category{},
+		&domain.Product{},
+		&domain.Cart{},
+	)
 	if err != nil {
 		log.Fatalf("Error on running migration %v", err.Error())
 	}
 
 	log.Println("Migration completed successfully")
+
+	//cors configuration shoould be added here
+	// c := cors.New(cors.Config{
+	// 	AllowOrigins:     "http://localhost:3030,http://localhost:3000",
+	// 	AllowHeaders:     "Content-Type,Accept,Authorization",
+	// 	AllowMethods:     "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+	// 	AllowCredentials: true,
+	// })
+	// app.Use(c)
+	// Define allowed origins
+	allowedOrigins := map[string]bool{
+		"http://localhost:3030": true,
+		"http://localhost:3000": true,
+	}
+
+	// Configure CORS middleware
+	c := cors.New(cors.Config{
+		AllowOriginsFunc: func(origin string) bool {
+			return allowedOrigins[origin]
+		},
+		AllowHeaders: []string{
+			"Content-Type",
+			"Accept",
+			"Authorization",
+		},
+		AllowMethods: []string{
+			"GET",
+			"POST",
+			"PUT",
+			"PATCH",
+			"DELETE",
+			"OPTIONS",
+		},
+		AllowCredentials: true, //if using cookies or auth tokens
+	})
+
+	// Use CORS middleware
+	app.Use(c)
 
 	//befor resthandler we gonna create a auth instance
 	//so that we can use this auth instance in user service

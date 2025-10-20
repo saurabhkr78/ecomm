@@ -143,7 +143,7 @@ func (a Auth) Authorize(ctx fiber.Ctx) error {
 	authHeaders, exists := headers["Authorization"]
 
 	if !exists || len(authHeaders) == 0 {
-		return ctx.Status(401).JSON(fiber.Map{
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"message": "unauthorized",
 			"reason":  "missing authorization header",
 		})
@@ -153,14 +153,14 @@ func (a Auth) Authorize(ctx fiber.Ctx) error {
 	user, err := a.VerifyToken(authHeader)
 
 	if err != nil {
-		return ctx.Status(401).JSON(fiber.Map{
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"message": "unauthorized",
 			"reason":  err.Error(),
 		})
 	}
 
 	if user.ID == 0 {
-		return ctx.Status(401).JSON(fiber.Map{
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"message": "unauthorized",
 			"reason":  "invalid user",
 		})
