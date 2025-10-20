@@ -17,10 +17,10 @@ import (
 
 type UserService struct {
 	// Add necessary fields like repository, logger, etc.
-	Repo   repository.UserRepository
-	Catalog   repository.CatalogRepository
-	Auth   helper.Auth
-	Config configs.AppConfig
+	Repo    repository.UserRepository
+	Catalog repository.CatalogRepository
+	Auth    helper.Auth
+	Config  configs.AppConfig
 }
 
 // receiver function
@@ -198,54 +198,61 @@ func (us UserService) BecomeSeller(id uint, input dto.SellerInput) (string, erro
 // return bunch of card item so return slice of interface
 func (us UserService) FindCart(id uint) ([]domain.Cart, error) {
 	cartItems, err := us.Repo.FindCartItems(id)
-	log.Printf("error %v",err)
+	log.Printf("error %v", err)
 
 	return cartItems, err
 }
 
-// input as product properties and user info to update the cart
-func (us UserService) CreateCart(input dto.CreateCartRequest, user domain.User) ([]domain.Cart, error) {
-	//check if cart exist for the user
-	cart, _ := us.Repo.FindCartItem(user.ID, input.ProductID)
+func (us UserService) CreateCart(input dto.CreateCartRequest, u domain.User) ([]domain.Cart, error) {
+	// check if the cart is Exist
+	cart, _ := us.Repo.FindCartItem(u.ID, input.ProductID)
 
 	if cart.ID > 0 {
-		//=>delete the cart items
+		if input.ProductID == 0 {
+			return nil, errors.New("please provide a valid product id")
+		}
+		//  => delete the cart item
 		if input.Quantity < 1 {
 			err := us.Repo.DeleteCartById(cart.ID)
-			log.Printf("errors on deleting cart items %v", err)
 			if err != nil {
-				return nil, errors.New("errors on deleting cart items")
+				log.Printf("Error on deleting cart item %v", err)
+				return nil, errors.New("error on deleting cart item")
 			}
 		} else {
-			//=> update the cart items
+			//  => update the cart item
 			cart.Qty = int(input.Quantity)
 			err := us.Repo.UpdateCart(cart)
-			log.Printf("errors on updating cart items %v", err)
 			if err != nil {
-				return nil, errors.New("errors on updating cart items")
+				// log error
+				return nil, errors.New("error on updating cart item")
 			}
 		}
-		// return us.Repo.FindCartItems(user.ID)
+
 	} else {
-		//=> create new cart items
-		product, _:= us.Catalog.FindProductByID(int(input.ProductID))
-		if product.ID>0 {
+		// check if product exist
+		product, _ := us.Catalog.FindProductByID(input.ProductID)
+		if product.ID < 1 {
 			return nil, errors.New("product not found to create cart item")
 		}
-		err:= us.Repo.CreateCart(domain.Cart{
-			UserId:    user.ID,
+		// create cart
+
+		err := us.Repo.CreateCart(domain.Cart{
+			UserId:    u.ID,
 			ProductId: input.ProductID,
 			Name:      product.Name,
-			ImageUrl: product.ImageUrl,
-			Qty:	   int(input.Quantity),
-			Price:    product.Price,
-			SellerId: uint(product.UserId),
+			ImageUrl:  product.ImageUrl,
+			Qty:       int(input.Quantity),
+			Price:     product.Price,
+			SellerId:  uint(product.UserId),
 		})
-		if err != nil {
-			return nil, errors.New("errors on creating cart items")
-		}
 
-	return us.Repo.FindCartItems(user.ID)
+		if err != nil {
+			return nil, errors.New("error on creating cart item")
+		}
+	}
+
+	return us.Repo.FindCartItems(u.ID)
+
 }
 
 // just find the user whether the user have cart or not

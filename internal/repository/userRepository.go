@@ -38,7 +38,7 @@ type UserRepository interface {
 	//supporting function for cart
 	FindCartItems(uId uint) ([]domain.Cart, error)
 	FindCartItem(uId uint, pId uint) (domain.Cart, error)
-	CreateCart(c domain.Cart) (domain.Cart, error)
+	CreateCart(c domain.Cart) error
 	UpdateCart(c domain.Cart) error
 	DeleteCartItems(uId uint) error
 	DeleteCartById(id uint) error
@@ -143,15 +143,19 @@ func (r userRepository) FindCartItem(uId uint, pId uint) (domain.Cart, error) {
 	return cartItem, err
 }
 
-func (r userRepository) CreateCart(c domain.Cart) (domain.Cart, error) {
-	return c, r.db.Create(&c).Error
+// if needed remove c
+func (r userRepository) CreateCart(c domain.Cart) error {
+	return r.db.Create(&c).Error
 
 }
+
+// TODO: response is not updating qty
 func (r userRepository) UpdateCart(c domain.Cart) error {
 	var cart domain.Cart
 	err := r.db.Model(&cart).Clauses(clause.Returning{}).Where("id = ?", c.ID).Updates(c).Error
 	return err
 }
+
 func (r userRepository) DeleteCartById(id uint) error {
 	err := r.db.Delete(&domain.Cart{}, id).Error
 	return err
