@@ -167,3 +167,10 @@ flow of data in app
 9.  SERVICE generates a JWT token (calls Helper) and returns it to the HANDLER.
 10. HANDLER creates a final JSON response and sends it back through the Fiber Server to the USER.
 
+
+Note:
+Preload fetches related/associated tables’ data in the same query, so you don’t have to make a separate query for each relation.
+Preload is used to automatically load associated data (like foreign key relations) when fetching records — making your code cleaner and avoiding multiple manual queries.
+
+Preload: Executes multiple SQL queries — one for the main model, one for each relation.
+Joins: Executes a single SQL query with a JOIN statement.

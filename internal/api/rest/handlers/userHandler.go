@@ -206,7 +206,7 @@ func (uh *UserHandler) CreateProfile(ctx fiber.Ctx) error {
 		})
 	}
 
-	return ctx.Status(http.StatusOK).JSON(fiber.Map{"message": "profile created/updated"})
+	return ctx.Status(http.StatusOK).JSON(fiber.Map{"message": "profile created successfully"})
 }
 
 // GetProfile fetches the user profile

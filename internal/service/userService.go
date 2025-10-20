@@ -142,7 +142,37 @@ func (us UserService) VerifyCode(id uint, code int) error {
 
 	return nil
 }
+
 func (us UserService) CreateProfile(id uint, input dto.ProfileInput) error {
+	//find the user first
+	user, err := us.Repo.FindUserByID(id)
+	if err != nil {
+		return err
+	}
+	if input.FirstName != "" {
+		user.FirstName = input.FirstName
+	}
+	if input.LastName != "" {
+		user.LastName = input.LastName
+	}
+
+	_, err = us.Repo.UpdateUser(id, user)
+
+	//create address
+	address := domain.Address{
+		AddressLine1: input.AddressInput.AddressLine1,
+		AddressLine2: input.AddressInput.AddressLine2,
+		Street:       input.AddressInput.Street,
+		City:         input.AddressInput.City,
+		State:        input.AddressInput.State,
+		Country:      input.AddressInput.Country,
+		PinCode:      input.AddressInput.PinCode,
+		UserID:       id,
+	}
+	err = us.Repo.CreateProfile(address)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -150,13 +180,44 @@ func (us UserService) CreateProfile(id uint, input dto.ProfileInput) error {
 // find the user by id and return the user profile but sometime
 // we are using pointer bcoz at any point of time we need to edit the specific profile so taht why we are returning kind of pointer
 func (us UserService) GetProfile(id uint) (*domain.User, error) {
-	// Implement the logic to get a user profile.
-	//some business logic and database calls
-	return nil, nil
+	user, err := us.Repo.FindUserByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
 }
-func (us UserService) UpdateProfile(id uint, input any) error {
-	// Implement the logic to update a user profile.
-	//some business logic and database calls
+func (us UserService) UpdateProfile(id uint, input dto.ProfileInput) error {
+	//find the user first
+	user, err := us.Repo.FindUserByID(id)
+	if err != nil {
+		return err
+	}
+	if input.FirstName != "" {
+		user.FirstName = input.FirstName
+	}
+	if input.LastName != "" {
+		user.LastName = input.LastName
+	}
+
+	_, err = us.Repo.UpdateUser(id, user)
+
+	address := domain.Address{
+		AddressLine1: input.AddressInput.AddressLine1,
+		AddressLine2: input.AddressInput.AddressLine2,
+		Street:       input.AddressInput.Street,
+		City:         input.AddressInput.City,
+		State:        input.AddressInput.State,
+		Country:      input.AddressInput.Country,
+		PinCode:      input.AddressInput.PinCode,
+		UserID:       id,
+	}
+
+	err = us.Repo.UpdateProfile(address)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

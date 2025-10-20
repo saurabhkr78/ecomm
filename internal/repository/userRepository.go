@@ -109,7 +109,7 @@ func (r userRepository) FindUser(email string) (domain.User, error) {
 
 func (r userRepository) FindUserByID(id uint) (domain.User, error) {
 	var user domain.User
-	err := r.db.First(&user, id).Error
+	err := r.db.Preload("Address").First(&user, id).Error
 	if err != nil {
 		log.Printf("error while finding user by id: %v\n", err)
 		return domain.User{}, errors.New("user not exists")

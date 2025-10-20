@@ -27,7 +27,9 @@ func StartServer(config configs.AppConfig) {
 	log.Println("Database connected successfully")
 
 	//if database connection successful then runthe migration(here auto migration automatically detect the changes in user.go domain file and create table accordingly)
-	err = db.AutoMigrate(&domain.User{},
+	err = db.AutoMigrate(
+		&domain.User{},
+		&domain.Address{},
 		&domain.BankAccount{},
 		&domain.Category{},
 		&domain.Product{},
