@@ -4,6 +4,7 @@ import (
 	"ecomm/configs"
 	"ecomm/internal/domain"
 	"ecomm/internal/dto"
+	"ecomm/internal/helper"
 	"ecomm/internal/repository"
 	notification "ecomm/pkg/Notification"
 	"errors"
@@ -11,8 +12,6 @@ import (
 	// "strconv"
 	"fmt"
 	"time"
-
-	"ecomm/internal/helper"
 )
 
 type UserService struct {
@@ -373,7 +372,51 @@ func (us UserService) CreateCart(input dto.CreateCartRequest, u domain.User) ([]
 }
 
 // just find the user whether the user have cart or not
-func (us UserService) CreateOrder(user *domain.User) (int, error) {
+func (us UserService) CreateOrder(user domain.User) (int, error) {
+	//find cart items of that user
+	cartItems, err := us.Repo.FindCartItems(user.ID)
+	if err != nil {
+		return 0, errors.New("error on finding cart items for the user")
+	}
+	if len(cartItems) == 0 {
+		return 0, errors.New("Cart is empty cannot create the order")
+	}
+
+	//find successful payment of that user
+	paymentId := "PAY12345" //dummy payment id
+	txnId := "TXN12345"     //dummy txn id
+	orderRef := helper.RandomNumbers(8)
+
+	//create Order with Generated OrderNumber
+	var totalAmount float64
+	var orderItems []domain.OrderItem
+	for _, item := range cartItems {
+		totalAmount += float64(item.Qty) * item.Price
+		orderItem := domain.OrderItem{
+			ProductId: item.ProductId,
+			Name:      item.Name,
+			Quantity:  item.Qty,
+			Price:     item.Price,
+			ImageUrl:  item.ImageUrl,
+			SellerId:  item.SellerId,
+		}
+		orderItems = append(orderItems, orderItem)
+	}
+	order := domain.Order{
+		UserID:         user.ID,
+		PaymentId:      paymentId,
+		TransactionId:  txnId,
+		OrderRefNumber: uint(orderRef),
+		TotalAmount:    totalAmount,
+		Items:          orderItems,
+	}
+	err := us.Repo.CreateOrder(order)
+
+	//send email to user with order details
+
+	//remove cart items from the cart
+
+	//return order number
 
 	return 0, nil
 }

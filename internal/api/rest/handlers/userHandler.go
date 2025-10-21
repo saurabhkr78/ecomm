@@ -88,6 +88,7 @@ func SetupUserRoutes(rh *rest.RestHandler) {
 
 	pvtRoutes.Post("/cart", handler.AddToCart)    // Add/update cart
 	pvtRoutes.Get("/cart", handler.GetCart)       // View cart
+	pvtRoutes.Post("/order", handler.CreateOrder) // Create order
 	pvtRoutes.Get("/order", handler.GetOrders)    // Fetch all orders
 	pvtRoutes.Get("/order/:id", handler.GetOrder) // Fetch specific order
 
@@ -278,6 +279,21 @@ func (uh *UserHandler) GetCart(ctx fiber.Ctx) error {
 	return ctx.Status(http.StatusOK).JSON(fiber.Map{
 		"message": "cart items",
 		"cart":    cart,
+	})
+}
+
+// CreateOrder creates a new order from the user's cart
+func (uh *UserHandler) CreateOrder(ctx fiber.Ctx) error {
+	//grab auth user from context i.e current user
+	user := uh.svc.Auth.GetCurrentUser(ctx)
+
+	orderRef, err := uh.svc.CreateOrder(user)
+	if err != nil {
+		return rest.InternalError(ctx, errors.New("unable to create order"))
+	}
+	return ctx.Status(http.StatusOK).JSON(fiber.Map{
+		"message":   "order created successfully",
+		"order_ref": orderRef,
 	})
 }
 

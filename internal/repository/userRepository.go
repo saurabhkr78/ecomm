@@ -42,7 +42,10 @@ type UserRepository interface {
 	UpdateCart(c domain.Cart) error
 	DeleteCartItems(uId uint) error
 	DeleteCartById(id uint) error
-
+	//order
+	CreateOrder(order domain.Order) error
+	FindOrders(uId uint) ([]domain.Order, error)
+	FindOrderById(id uint) (domain.Order, error)
 	//profile
 	CreateProfile(addr domain.Address) error
 	UpdateProfile(addr domain.Address) error
@@ -173,6 +176,24 @@ func (r userRepository) DeleteCartById(id uint) error {
 func (r userRepository) DeleteCartItems(uId uint) error {
 	err := r.db.Where("user_id = ?", uId).Delete(&domain.Cart{}).Error
 	return err
+}
+
+// order functions
+
+func (r userRepository) CreateOrder(order domain.Order) error {
+	return r.db.Create(&order).Error
+}
+
+func (r userRepository) FindOrders(uId uint) ([]domain.Order, error) {
+	var orders []domain.Order
+	err := r.db.Where("user_id = ?", uId).Find(&orders).Error
+	return orders, err
+}
+
+func (r userRepository) FindOrderById(id uint) (domain.Order, error) {
+	var order domain.Order
+	err := r.db.First(&order, id).Error
+	return order, err
 }
 
 // profile functions
