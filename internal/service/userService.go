@@ -385,7 +385,7 @@ func (us UserService) CreateOrder(user domain.User) (int, error) {
 	//find successful payment of that user
 	paymentId := "PAY12345" //dummy payment id
 	txnId := "TXN12345"     //dummy txn id
-	orderRef := helper.RandomNumbers(8)
+	orderRef, _ := helper.RandomNumbers(8)
 
 	//create Order with Generated OrderNumber
 	var totalAmount float64
@@ -406,11 +406,11 @@ func (us UserService) CreateOrder(user domain.User) (int, error) {
 		UserID:         user.ID,
 		PaymentId:      paymentId,
 		TransactionId:  txnId,
-		OrderRefNumber: uint(orderRef),
+		OrderRefNumber: orderRef,
 		TotalAmount:    totalAmount,
 		Items:          orderItems,
 	}
-	err := us.Repo.CreateOrder(order)
+	err = us.Repo.CreateOrder(order)
 
 	//send email to user with order details
 
