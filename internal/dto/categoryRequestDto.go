@@ -5,4 +5,5 @@ type CreateCategoryRequest struct {
 	ParentId     *uint  `json:"parent_id"`
 	ImageUrl     string `json:"image_url"`
 	DisplayOrder int    `json:"display_order"`
+	Payment      string `json:"payment"`
 }
