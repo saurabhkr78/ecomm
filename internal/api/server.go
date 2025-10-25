@@ -6,6 +6,7 @@ import (
 	"ecomm/internal/api/rest/handlers"
 	"ecomm/internal/domain"
 	"ecomm/internal/helper"
+	"ecomm/pkg/payment"
 	"log"
 
 	"github.com/gofiber/fiber/v3"
@@ -36,6 +37,7 @@ func StartServer(config configs.AppConfig) {
 		&domain.Cart{},
 		&domain.Order{},
 		&domain.OrderItem{},
+		&domain.Payment{},
 	)
 	if err != nil {
 		log.Fatalf("Error on running migration %v", err.Error())
@@ -89,12 +91,15 @@ func StartServer(config configs.AppConfig) {
 
 	auth := helper.SetUpAuth(config.AppSecret)
 
+	// proposed change
+	paymentClient := payment.NewPaymentClient(config.StripeSecretKey)
 	//intantiate rest handler
 	rh := &rest.RestHandler{
 		App:    app,
 		DB:     db,
 		Auth:   auth,
 		Config: config,
+		Pc:     paymentClient,
 	}
 	//to create table we need migration also using gorm
 
@@ -110,6 +115,7 @@ func SetupRoutes(rh *rest.RestHandler) {
 	//setup user routes
 	handlers.SetupUserRoutes(rh)
 	//transaction routes
+	handlers.SetupTransactionRoutes(rh)
 	//catalog routes
 	handlers.SetupCatalogRoutes(rh)
 }

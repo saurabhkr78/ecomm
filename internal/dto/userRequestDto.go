@@ -10,7 +10,7 @@ type UserSignup struct {
 }
 
 type VerificationCodeInput struct {
-	Code int `json:"code"`
+	Code string `json:"code"`
 }
 
 type SellerInput struct {

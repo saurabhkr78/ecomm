@@ -30,6 +30,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/stripe/stripe-go/v83 v83.0.2 // indirect
 	github.com/tinylib/msgp v1.4.0 // indirect
 	github.com/twilio/twilio-go v1.28.3 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect

@@ -14,6 +14,9 @@ type AppConfig struct {
 	TwilioSid         string
 	TwilioAuthToken   string
 	TwilioPhoneNumber string
+	StripeSecretKey   string
+	SuccessUrl        string
+	CancelUrl         string
 }
 
 // here we will be reading env file and setting up the APPConfig struct
@@ -52,5 +55,8 @@ func SetUpEnv() (cfg AppConfig, err error) {
 		TwilioSid:         os.Getenv("TWILIO_SID"),
 		TwilioAuthToken:   os.Getenv("TWILIO_AUTH_TOKEN"),
 		TwilioPhoneNumber: os.Getenv("TWILIO_PHONE_NUMBER"),
+		StripeSecretKey:   os.Getenv("STRIPE_SECRET_KEY"),
+		SuccessUrl:        os.Getenv("STRIPE_SUCCESS_URL"),
+		CancelUrl:         os.Getenv("STRIPE_CANCEL_URL"),
 	}, nil
 }

@@ -174,3 +174,38 @@ Preload is used to automatically load associated data (like foreign key relation
 
 Preload: Executes multiple SQL queries — one for the main model, one for each relation.
 Joins: Executes a single SQL query with a JOIN statement.
+
+
+
+
+//Better way for commit messages:
+
+<type>(<optional scope>): <short description>
+
+[optional body]
+
+[optional footer(s)]
+
+
+Common Commit Types
+feat: introducing a new feature
+
+fix: a bug fix
+
+docs: documentation updates
+
+style: formatting or structural changes (no code logic change)
+
+refactor: code restructuring without changing behavior
+
+test: adding or improving tests
+
+chore: general maintenance or setup tasks
+
+ci: CI/CD pipeline changes
+
+build: updates to the build system or dependencies
+
+perf: performance improvements
+
+revert: rollback of a previous commit

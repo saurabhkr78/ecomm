@@ -1,8 +1,9 @@
 package rest
 
 import (
-	configs "ecomm/configs"
+	"ecomm/configs"
 	"ecomm/internal/helper"
+	"ecomm/pkg/payment"
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
@@ -16,4 +17,5 @@ type RestHandler struct {
 	DB     *gorm.DB
 	Auth   helper.Auth
 	Config configs.AppConfig
+	Pc     payment.PaymentClient
 }

@@ -1,0 +1,66 @@
+package service
+
+import (
+	"ecomm/internal/domain"
+	"ecomm/internal/dto"
+	"ecomm/internal/helper"
+	"ecomm/internal/repository"
+
+	"github.com/stripe/stripe-go/v83"
+)
+
+type TransactionService struct {
+	Repo repository.TransactionRepository
+	Auth helper.Auth
+}
+
+func (s TransactionService) GetOrders(u domain.User) ([]domain.OrderItem, error) {
+	orders, err := s.Repo.FindOrders(u.ID)
+	if err != nil {
+		return nil, err
+	}
+	return orders, nil
+}
+
+func (s TransactionService) GetOrderDetails(u domain.User, id uint) (dto.SellerOrderDetails, error) {
+	order, err := s.Repo.FindOrderById(u.ID, id)
+	if err != nil {
+		return dto.SellerOrderDetails{}, err
+	}
+	return order, nil
+}
+
+func (s TransactionService) GetActivePayment(uId uint) (*domain.Payment, error) {
+	return s.Repo.FindInitialPayment(uId)
+}
+
+func (s TransactionService) StoreCreatedPayment(uId uint, ps *stripe.CheckoutSession, amount float64, orderId string) error {
+	payment := domain.Payment{
+		UserId:    uId,
+		Amount:    amount,
+		Status:    domain.PaymentStatusInitial,
+		PaymentId: ps.ID,
+		// ClientSecret: input.ClientSecret,
+		OrderId:    orderId,
+		PaymentUrl: ps.URL,
+	}
+
+	return s.Repo.CreatePayment(&payment)
+}
+
+func (s TransactionService) UpdatePayment(userId uint, status string, paymentLog string) error {
+	p, err := s.GetActivePayment(userId)
+	if err != nil {
+		return err
+	}
+	p.Status = domain.PaymentStatus(status)
+	p.Response = paymentLog
+	return s.Repo.UpdatePayment(p)
+}
+
+func NewTransactionService(r repository.TransactionRepository, auth helper.Auth) *TransactionService {
+	return &TransactionService{
+		Repo: r,
+		Auth: auth,
+	}
+}
