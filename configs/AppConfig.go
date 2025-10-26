@@ -51,7 +51,10 @@ func SetUpEnv() (cfg AppConfig, err error) {
 		return AppConfig{}, errors.New("env variable APP_SECRET not found")
 	}
 
-	return AppConfig{ServerPort: httpPort, Dsn: Dsn, AppSecret: AppSecret,
+	return AppConfig{
+		ServerPort:        httpPort,
+		Dsn:               Dsn,
+		AppSecret:         AppSecret,
 		TwilioSid:         os.Getenv("TWILIO_SID"),
 		TwilioAuthToken:   os.Getenv("TWILIO_AUTH_TOKEN"),
 		TwilioPhoneNumber: os.Getenv("TWILIO_PHONE_NUMBER"),

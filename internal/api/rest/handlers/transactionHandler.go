@@ -62,10 +62,11 @@ func (h *TransactionHandler) MakePayment(ctx fiber.Ctx) error {
 
 	//2.check if payment session active then return the payment url
 	activePayment, err := h.Svc.GetActivePayment(user.ID)
-	if err != nil {
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		// Handle error, maybe log and return internal server error
 		return rest.InternalError(ctx, err)
 	}
+
 	if activePayment != nil && activePayment.ID > 0 {
 		return ctx.Status(http.StatusOK).JSON(&fiber.Map{
 			"message":     "existing payment",
@@ -83,7 +84,9 @@ func (h *TransactionHandler) MakePayment(ctx fiber.Ctx) error {
 	// 4. create a new payment session
 
 	sessionResult, err := h.PaymentClient.CreatePayment(amount, user.ID, orderId)
-
+	if err != nil {
+		return rest.InternalError(ctx, err)
+	}
 	// 5. store payment session data to create to store payment
 	err = h.Svc.StoreCreatedPayment(user.ID, sessionResult, amount, orderId)
 	if err != nil {

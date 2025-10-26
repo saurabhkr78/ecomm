@@ -91,8 +91,13 @@ func StartServer(config configs.AppConfig) {
 
 	auth := helper.SetUpAuth(config.AppSecret)
 
-	// proposed change
-	paymentClient := payment.NewPaymentClient(config.StripeSecretKey)
+	log.Printf("Stripe Config: Key=%s, SuccessURL=%s, CancelURL=%s",
+		config.StripeSecretKey,
+		config.SuccessUrl,
+		config.CancelUrl,
+	)
+
+	paymentClient := payment.NewPaymentClient(config.StripeSecretKey, config.SuccessUrl, config.CancelUrl)
 	//intantiate rest handler
 	rh := &rest.RestHandler{
 		App:    app,

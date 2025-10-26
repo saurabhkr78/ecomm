@@ -19,12 +19,45 @@ type Payment struct {
 	cancelUrl       string
 }
 
+// func (p Payment) CreatePayment(amount float64, userId uint, orderId string) (*stripe.CheckoutSession, error) {
+// 	stripe.Key = p.stripeSecretKey
+// 	amountInCents := float64(amount * 100)
+
+// 	params := &stripe.CheckoutSessionParams{
+// 		PaymentMethodTypes: stripe.StringSlice([]string{"card", "UPI", "Netbanking", "wallets", "emi", "paylater", "paytm"}),
+// 		LineItems: []*stripe.CheckoutSessionLineItemParams{
+// 			{
+// 				PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
+// 					UnitAmount: stripe.Int64(int64(amountInCents)),
+// 					Currency:   stripe.String("usd"),
+// 					ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
+// 						Name: stripe.String("Electronics Order Payment"),
+// 					},
+// 				},
+// 				Quantity: stripe.Int64(1),
+// 			},
+// 		},
+// 		Mode:       stripe.String(string(stripe.CheckoutSessionModePayment)),
+// 		SuccessURL: stripe.String(p.successUrl),
+// 		CancelURL:  stripe.String(p.cancelUrl),
+// 	}
+// 	params.AddMetadata("user_id", fmt.Sprintf("%d", userId))
+// 	params.AddMetadata("order_id", fmt.Sprintf("%s", orderId))
+
+//		sess, err := session.New(params)
+//		if err != nil {
+//			log.Printf("session creation error: %v", err)
+//			return nil, fmt.Errorf("failed to create stripe checkout session: %w", err)
+//		}
+//		return sess, nil
+//	}
 func (p Payment) CreatePayment(amount float64, userId uint, orderId string) (*stripe.CheckoutSession, error) {
 	stripe.Key = p.stripeSecretKey
 	amountInCents := float64(amount * 100)
 
 	params := &stripe.CheckoutSessionParams{
-		PaymentMethodTypes: stripe.StringSlice([]string{"card", "UPI", "Netbanking", "wallets", "emi", "paylater", "paytm"}),
+		// Use only valid Stripe payment method types
+		PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
 		LineItems: []*stripe.CheckoutSessionLineItemParams{
 			{
 				PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
@@ -69,8 +102,15 @@ func (p Payment) GetPaymentStatus(pId string) (*stripe.CheckoutSession, error) {
 
 //this is a constructor function for PaymentClient
 
-func NewPaymentClient(stripeSecretKey string) PaymentClient {
+func NewPaymentClient(stripeSecretKey, successUrl, cancelUrl string) PaymentClient {
+	// Add validation to ensure URLs are provided
+	if successUrl == "" || cancelUrl == "" {
+		log.Fatal("Stripe success_url and cancel_url must be provided in environment variables")
+	}
+
 	return &Payment{
 		stripeSecretKey: stripeSecretKey,
+		successUrl:      successUrl,
+		cancelUrl:       cancelUrl,
 	}
 }
