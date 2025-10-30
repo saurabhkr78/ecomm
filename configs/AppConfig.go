@@ -1,7 +1,7 @@
 package configs
 
 import (
-	"errors"
+	"fmt"
 	"github.com/joho/godotenv"
 	"os"
 )
@@ -15,8 +15,6 @@ type AppConfig struct {
 	TwilioAuthToken   string
 	TwilioPhoneNumber string
 	StripeSecretKey   string
-	SuccessUrl        string
-	CancelUrl         string
 }
 
 // here we will be reading env file and setting up the APPConfig struct
@@ -29,27 +27,20 @@ func SetUpEnv() (cfg AppConfig, err error) {
 		godotenv.Load()
 	}
 	//read the env variable
-	httpPort := os.Getenv("HTTP_PORT")
-
-	//check if httpPort is empty
-	if len(httpPort) < 1 {
-		return AppConfig{}, errors.New("env variable HTTP_PORT not found")
-	}
+	httpPort := os.Getenv("SERVER_PORT")
 	//dsn for database connection
-	Dsn := os.Getenv("DSN")
-	if len(Dsn) < 1 {
-		return AppConfig{}, errors.New("env variable DSN not found")
-	}
+	Dsn := fmt.Sprintf("host=%v user=%v password=%v dbname=%v port=%v TimeZone=Asia/Kolkata",
+		os.Getenv("DB_HOST"),
+		os.Getenv("DB_USER"),
+		os.Getenv("DB_PASSWORD"),
+		os.Getenv("DB_NAME"),
+		os.Getenv("DB_PORT"),
+	)
 	/*
 	   AppConfig{} creates an empty struct of type AppConfig with all fields set to their zero values.
 	   errors.New(...) creates a new error object with the given message.
 	*/
-
 	AppSecret := os.Getenv("APP_SECRET")
-
-	if len(AppSecret) < 1 {
-		return AppConfig{}, errors.New("env variable APP_SECRET not found")
-	}
 
 	return AppConfig{
 		ServerPort:        httpPort,
@@ -59,7 +50,5 @@ func SetUpEnv() (cfg AppConfig, err error) {
 		TwilioAuthToken:   os.Getenv("TWILIO_AUTH_TOKEN"),
 		TwilioPhoneNumber: os.Getenv("TWILIO_PHONE_NUMBER"),
 		StripeSecretKey:   os.Getenv("STRIPE_SECRET_KEY"),
-		SuccessUrl:        os.Getenv("STRIPE_SUCCESS_URL"),
-		CancelUrl:         os.Getenv("STRIPE_CANCEL_URL"),
 	}, nil
 }

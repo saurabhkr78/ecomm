@@ -102,15 +102,9 @@ func (p Payment) GetPaymentStatus(pId string) (*stripe.CheckoutSession, error) {
 
 //this is a constructor function for PaymentClient
 
-func NewPaymentClient(stripeSecretKey, successUrl, cancelUrl string) PaymentClient {
-	// Add validation to ensure URLs are provided
-	if successUrl == "" || cancelUrl == "" {
-		log.Fatal("Stripe success_url and cancel_url must be provided in environment variables")
-	}
+func NewPaymentClient(stripeSecretKey string) PaymentClient {
 
 	return &Payment{
 		stripeSecretKey: stripeSecretKey,
-		successUrl:      successUrl,
-		cancelUrl:       cancelUrl,
 	}
 }

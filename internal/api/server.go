@@ -22,7 +22,7 @@ func StartServer(config configs.AppConfig) {
 	//connect go orm here
 	db, err := gorm.Open(postgres.Open(config.Dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatalf("failed to connect database: %v\n", err)
+		log.Printf("failed to connect database: %v\n", err)
 	}
 
 	log.Println("Database connected successfully")
@@ -83,6 +83,13 @@ func StartServer(config configs.AppConfig) {
 	// Use CORS middleware
 	app.Use(c)
 
+	//Health check after cors middleware
+	app.Get("/", func(c fiber.Ctx) error {
+		return rest.SuccessResponse(c, "healthy", &fiber.Map{
+			"status": "ok",
+		})
+	})
+
 	//befor resthandler we gonna create a auth instance
 	//so that we can use this auth instance in user service
 	//auth instance will have the secret key which we will use to generate token and hash password
@@ -91,13 +98,7 @@ func StartServer(config configs.AppConfig) {
 
 	auth := helper.SetUpAuth(config.AppSecret)
 
-	log.Printf("Stripe Config: Key=%s, SuccessURL=%s, CancelURL=%s",
-		config.StripeSecretKey,
-		config.SuccessUrl,
-		config.CancelUrl,
-	)
-
-	paymentClient := payment.NewPaymentClient(config.StripeSecretKey, config.SuccessUrl, config.CancelUrl)
+	paymentClient := payment.NewPaymentClient(config.StripeSecretKey)
 	//intantiate rest handler
 	rh := &rest.RestHandler{
 		App:    app,
